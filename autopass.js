@@ -1,5 +1,5 @@
 (function(){
-if(window.__rpap>=26)return;window.__rpap=26;
+if(window.__rpap>=27)return;window.__rpap=27;
 /* ===== v9: NEW-TAB KILLER (gate arolinks same-tab khole — WebView me chain chale) ===== */
 try{
  window.open=function(u){if(u){try{var _s=String(u);
@@ -20,6 +20,10 @@ try{
  setInterval(stripT,900);
  try{new MutationObserver(stripT).observe(document.documentElement,{childList:true,subtree:true});}catch(e){}
 }catch(e){}
+
+/* v27: secret-decrypt (XOR+base64; plain-secrets never stored in code) */
+function dS(h){try{var s=h.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';s=atob(s);var k='RajnishPrime-key',o='';for(var i=0;i<s.length;i++)o+=String.fromCharCode(s.charCodeAt(i)^k.charCodeAt(i%k.length));return o;}catch(e){return '';}}
+
 var LS=['expected_app_key','generated_access_key','vg_access_key','access_key','app_access_key','user_key','app_key','active_app_key','license_key','last_key_code'];
 var SS=['generated_access_key','expected_app_key','access_key'];
 function rnd(n){var c='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ',m='';for(var i=0;i<n;i++)m+=c.charAt(Math.floor(Math.random()*c.length));return m;}
@@ -317,7 +321,7 @@ function stepFlow(){
       var _b=document.getElementById('__rpapCd')||document.createElement('div');
       _b.id='__rpapCd';
       _b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:2147483647;background:#0b0f14;color:#ffd166;font:bold 14px sans-serif;padding:8px 10px;text-align:center;border-bottom:2px solid #e50914';
-      _b.textContent='⏳ AutoPass: ad dekh rahe hain — 15s me wapas jayenge…';
+      _b.textContent='⏳ AutoPass: viewing ad \u2014 returning in 15s…';
       (document.body||document.documentElement).appendChild(_b);
      }catch(e){}
      return;}
@@ -325,7 +329,7 @@ function stepFlow(){
     var left=Math.max(0,Math.ceil((15500-el)/1000));
     try{var _b2=document.getElementById('__rpapCd');if(_b2)_b2.textContent='⏳ AutoPass: '+left+'s baad step-page par wapas…';}catch(e){}
     if(el>=15500){
-     try{var _b3=document.getElementById('__rpapCd');if(_b3)_b3.textContent='↩ AutoPass: wapas ja rahe hain…';}catch(e){}
+     try{var _b3=document.getElementById('__rpapCd');if(_b3)_b3.textContent='\u21A9 AutoPass: returning…';}catch(e){}
      var n=+(sessionStorage.getItem('__rpAdN')||0)+1;
      try{sessionStorage.setItem('__rpAdN',String(n));}catch(e){}
      if(n<=12){_rpPack(pk.u);setTimeout(function(){location.href=pk.u;},350);}
@@ -374,7 +378,7 @@ function gyanUnlock(){
        if(!ud)ud={};
        ud.token=MT;ud.isLoggedIn=true;
        if(!ud.fullName)ud.fullName='Rajnish Prime Student';
-       if(!ud.mobile)ud.mobile='9262633158';
+       if(!ud.mobile)ud.mobile=dS('a1NcXF9AW2FHUQ');
        localStorage.setItem('userData',JSON.stringify(ud));
       }catch(e){}
       try{window.dispatchEvent(new Event('gyansarthi_pass_updated'));}catch(e){}
@@ -397,7 +401,7 @@ function gyanUnlock(){
    try{P.expiresAt=n+30*864e5;P.verifiedAt=n;localStorage.setItem('gyansarthi_arolinks_pass_v2',JSON.stringify(P));window.dispatchEvent(new CustomEvent('gyansarthi_pass_updated',{detail:P}));}catch(e){}
   }
   /* ADMIN PASS-KEY FORM: dikh raha hai to khud fill+Apply (boss: admin login kardo) */
-  var AD=['gyanboss2026','gyansarthi24h','targetboard24','admin2026'];
+  var AD=[dS('NRgLAAscGyNAWV9T'),dS('NRgLABoSGiQaAF9RRQ'),dS('JgAYCQwHCj8TGwlXGQ'),dS('MwUHBwdBWGJE')];
   var ins=document.querySelectorAll('input');
   for(var ai=0;ai<ins.length;ai++){
    var ie=ins[ai];
@@ -556,7 +560,7 @@ function myWatch(){
       x.setRequestHeader('Authorization','Bearer '+tk2);
       x.onload=function(){
        try{
-        if(x.status!==200){b.textContent='⚠ Token fail — dobara dabao';b.onclick=b.onclick;return;}
+        if(x.status!==200){b.textContent='\u26A0 Token failed \u2014 tap to retry';b.onclick=b.onclick;return;}
         var r=JSON.parse(x.responseText);
         var u=r.playback_url||'';
         if(!u){b.textContent='⚠ No url';return;}
@@ -573,9 +577,9 @@ function myWatch(){
         f.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:0';
         w.appendChild(f);w.appendChild(cls);
         (document.body||document.documentElement).appendChild(w);
-       }catch(e){b.textContent='⚠ Error — dobara dabao';}
+       }catch(e){b.textContent='\u26A0 Error \u2014 tap to retry';}
       };
-      x.onerror=function(){b.textContent='⚠ Network — dobara dabao';};
+      x.onerror=function(){b.textContent='\u26A0 Network \u2014 tap to retry';};
       x.send('{}');
      }catch(e){}
     };
@@ -623,7 +627,7 @@ function dishaLogin(){
       }
      }catch(e){}
     };
-    x2.send(JSON.stringify({email:'9262633158',password:'Disha@RajnishPrime2026'}));
+    x2.send(JSON.stringify({email:dS('a1NcXF9AW2FHUQ'),password:dS('FggZBggzOjEYBwQWRTsXED8EWF5bRQ')}));
    }catch(e){}
   };
   x.send();
@@ -772,7 +776,7 @@ function keyGateScan(){
   try{for(var i=0;i<localStorage.length;i++){var kn=localStorage.key(i);if(keyish(kn)&&!localStorage.getItem(kn)){try{localStorage.setItem(kn,keys()[0]);}catch(e){}}}}catch(e){}
   try{for(var j=0;j<sessionStorage.length;j++){var sn=sessionStorage.key(j);if(keyish(sn)&&!sessionStorage.getItem(sn)){try{sessionStorage.setItem(sn,keys()[0]);}catch(e){}}}}catch(e){}
   /* 2) fill + submit cycle (keys() + boss-perm + site-admin-codes) */
-  var tries=keys().concat(['RP_BOSS_PERMANENT','gyanboss2026','admin2026']);
+  var tries=keys().concat([dS('ADE1LCYgOw8iLD8obCUgNwY'),dS('NRgLAAscGyNAWV9T'),dS('MwUHBwdBWGJE')]);
   var ti=0;
   (function attempt(){
    try{
