@@ -1,5 +1,5 @@
 (function(){
-if(window.__rpap>=28)return;window.__rpap=28;
+if(window.__rpap>=29)return;window.__rpap=29;
 /* ===== v9: NEW-TAB KILLER (gate arolinks same-tab khole — WebView me chain chale) ===== */
 try{
  window.open=function(u){if(u){try{var _s=String(u);
@@ -674,6 +674,96 @@ function socialGuard(){
  }catch(e){}
 }
 
+
+/* ===== v29: DRM-ERROR SELF-HEAL (TPStreams "Error Code: 5" — token is single-use:
+   stale/used token + cache => error-5. Heal = fresh server-token + cache-busted iframe reload,
+   auto site-retry, then own-player fallback, then browser fallback. Fully automatic.) ===== */
+var _rpDrmBusy=0,_rpDrmN=0;
+function drmHeal(){
+ try{
+  if(_rpDrmBusy)return;
+  if(!/tpstreams|gyanboss-tb-2310|spidy|gyansarthi/i.test(location.href))return;
+  var bt=(document.body?document.body.innerText:'')||'';
+  if(!/DRM-protected|Error Code:\s*5|unable to play/i.test(bt))return;
+  /* asset-id: iframe-src se ya screen-text se (expand via STUDY) */
+  var aid='';
+  try{
+   var fs=document.querySelectorAll('iframe');
+   for(var i=0;i<fs.length;i++){var m=(fs[i].src||'').match(/embed\/kuepke\/([A-Za-z0-9_-]{6,20})/);if(m){aid=m[1];break}}
+  }catch(e){}
+  if(!aid){var mm=bt.match(/ID:\s*([A-Za-z0-9_-]{8,20})/);if(mm)aid=rpExpandAsset(mm[1]);}
+  if(!aid)return;
+  _rpDrmBusy=1;_rpDrmN++;
+  if(_rpDrmN>4){_rpDrmBusy=0;return} /* heal-loop cap */
+  try{sessionStorage.removeItem('__rpTok_'+aid);}catch(e){}
+  var tk=localStorage.getItem('token')||'';
+  if(tk.length<40){_rpDrmBusy=0;return}
+  var x=new XMLHttpRequest();
+  x.open('POST','/api/tb/tpstreams/token/'+encodeURIComponent(aid),true);
+  x.setRequestHeader('Content-Type','application/json');
+  x.setRequestHeader('Authorization','Bearer '+tk);
+  x.onload=function(){
+   _rpDrmBusy=0;
+   try{
+    if(x.status!==200)return;
+    var r=JSON.parse(x.responseText);
+    var u=r&&r.playback_url||'';
+    if(!u)return;
+    u=u+(u.indexOf('?')>-1?'&':'?')+'_rpHeal='+Date.now(); /* cache-bust */
+    /* 1) site-iframe ko FRESH-url par replace */
+    var done=0;
+    try{
+     var fs=document.querySelectorAll('iframe');
+     for(var j=0;j<fs.length;j++){
+      if(/tpstreams\.com/.test(fs[j].src||'')){fs[j].src=u;done=1;break}
+     }
+    }catch(e){}
+    /* 2) player-area me iframe nahi → fullscreen-fresh-overlay */
+    if(!done){
+     try{
+      var old=document.getElementById('__rpapPlay');if(old)old.remove();
+      var w=document.createElement('div');w.id='__rpapPlay';
+      w.style.cssText='position:fixed;inset:0;z-index:2147483647;background:#000';
+      var cls=document.createElement('div');cls.textContent='\u2715';
+      cls.style.cssText='position:absolute;top:8px;right:14px;z-index:2;color:#fff;font:26px sans-serif;cursor:pointer;background:rgba(0,0,0,.6);width:40px;height:40px;text-align:center;line-height:40px;border-radius:20px';
+      cls.onclick=function(){try{w.remove();}catch(e){}};
+      var f=document.createElement('iframe');
+      f.src=u;f.allow='autoplay; fullscreen; encrypted-media';
+      f.setAttribute('allowfullscreen','true');
+      f.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:0';
+      w.appendChild(f);w.appendChild(cls);
+      (document.body||document.documentElement).appendChild(w);
+     }catch(e){}
+    }
+    /* 3) 1.4s baad site-ka retry-button bhi daba (player-internal-state reset) */
+    setTimeout(function(){
+     try{
+      var bs=document.querySelectorAll('button');
+      for(var b=0;b<bs.length;b++){var t=bs[b].innerText||'';
+       if(/retry|\u092a\u0941\u0928\u0903/i.test(t)){try{bs[b].click();}catch(e){}break}}
+     }catch(e){}
+    },1400);
+    /* 4) 6s baad bhi DRM-error => browser-fallback-btn inject (one-time) */
+    setTimeout(function(){
+     try{
+      var b2=(document.body?document.body.innerText:'')||'';
+      if(/DRM-protected|Error Code:\s*5/i.test(b2)&&!document.getElementById('__rpapDrmBtn')){
+       var bb=document.createElement('button');
+       bb.id='__rpapDrmBtn';
+       bb.textContent='Open in browser (full DRM support)';
+       bb.style.cssText='width:92%;max-width:420px;margin:10px auto;display:block;background:linear-gradient(90deg,#e50914,#ff512f);color:#fff;font:bold 14px sans-serif;padding:13px;border:0;border-radius:12px;cursor:pointer';
+       bb.onclick=function(){try{location.href='intent://'+location.host+location.pathname+'#Intent;scheme=https;package=com.android.chrome;end';}catch(e){}};
+       (document.body||document.documentElement).appendChild(bb);
+      }
+     }catch(e){}
+    },6000);
+   }catch(e){_rpDrmBusy=0;}
+  };
+  x.onerror=function(){_rpDrmBusy=0;};
+  x.send('{}');
+ }catch(e){_rpDrmBusy=0;}
+}
+
 function rpOverlay(){ /* fullscreen-overlay skeleton */
  var w=document.createElement('div');w.id='__rpapPlay';
  w.style.cssText='position:fixed;inset:0;z-index:2147483647;background:#000';
@@ -848,6 +938,7 @@ function keyGateScan(){
 
 var last=0,lastx=0;
 function scan(){
+ drmHeal();
  socialGuard();
  keyGateScan();
  wallKill();
