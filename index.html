@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Rajnish Prime — Download Latest APK</title>
+<meta name="robots" content="noindex">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 20% 10%,rgba(229,9,20,.18),transparent 45%),radial-gradient(circle at 85% 80%,rgba(255,81,47,.12),transparent 45%),#0a0e1e;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;color:#fff;padding:18px}
+.card{max-width:420px;width:100%;background:linear-gradient(160deg,#1a1030,#0e0a1c);border:1px solid rgba(255,255,255,.09);border-radius:26px;padding:34px 26px;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.55)}
+.logo{width:92px;height:92px;border-radius:24px;margin:0 auto 16px;background:linear-gradient(135deg,#e50914,#ff512f);display:flex;align-items:center;justify-content:center;font-size:44px;box-shadow:0 12px 34px rgba(229,9,20,.4)}
+h1{font-size:23px;font-weight:900;letter-spacing:.3px}
+.ver{display:inline-block;margin:10px 0 4px;padding:5px 14px;border-radius:999px;background:rgba(255,214,79,.14);color:#ffd54f;font-size:12.5px;font-weight:800;letter-spacing:.6px}
+p.sub{color:#aab3cf;font-size:13.5px;line-height:1.6;margin:12px 0 22px}
+.dl{display:block;width:100%;padding:16px;border:0;border-radius:16px;background:linear-gradient(90deg,#e50914,#ff512f);color:#fff;font-size:15.5px;font-weight:900;letter-spacing:.4px;cursor:pointer;text-decoration:none;box-shadow:0 10px 26px rgba(229,9,20,.35)}
+.dl:active{transform:scale(.985)}
+.steps{margin-top:22px;text-align:left;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:14px 16px}
+.steps b{color:#ffd54f;font-size:12px;letter-spacing:.8px}
+.steps ol{margin:8px 0 0 18px;color:#c8cfe6;font-size:12.5px;line-height:1.85}
+.spin{width:15px;height:15px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;display:inline-block;vertical-align:-3px;margin-right:8px;animation:s 1s linear infinite}
+@keyframes s{to{transform:rotate(360deg)}}
+.foot{margin-top:16px;color:#5c6584;font-size:10.5px;letter-spacing:.6px}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">⚡</div>
+  <h1>Rajnish Prime</h1>
+  <div class="ver" id="ver">LATEST BUILD • AUTO-UPDATED</div>
+  <p class="sub">Official app installer. Tap the button and the download starts instantly in Chrome — always the newest version.</p>
+  <a class="dl" id="btn" href="RajnishPrime.apk" download><span class="spin" id="sp"></span>Preparing download…</a>
+  <div class="steps">
+    <b>INSTALL (FIRST TIME)</b>
+    <ol>
+      <li>Open the downloaded file from notifications</li>
+      <li>Allow "Install unknown apps" for Chrome if asked</li>
+      <li>Tap Install — done!</li>
+    </ol>
+  </div>
+  <div class="foot">ᴘᴏᴡᴇʀᴇᴅ ʙʏ ʀᴀᴊɴɪsʜ ᴘʀɪᴍᴇ</div>
+</div>
+<script>
+(function(){
+  var b=document.getElementById('btn'),sp=document.getElementById('sp');
+  setTimeout(function(){
+    sp.style.display='none';
+    b.innerHTML='⬇&nbsp; DOWNLOAD LATEST APK';
+    try{var l=document.createElement('a');l.href='RajnishPrime.apk';l.download='RajnishPrime.apk';document.body.appendChild(l);l.click();l.remove();}catch(e){location.href='RajnishPrime.apk';}
+  },1200);
+  fetch('https://rajnish-prime-faa2b-default-rtdb.europe-west1.firebasedatabase.app/appupdate.json').then(function(r){return r.json()}).then(function(d){
+    if(d&&d.versionName){document.getElementById('ver').textContent='LATEST • v'+d.versionName+' (build '+d.versionCode+')';}
+  }).catch(function(){});
+})();
+</script>
+</body>
+</html>
