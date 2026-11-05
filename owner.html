@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rajnish Prime — Owner Control Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070B18;--panel:#0D1428;--card:#111A33;--card2:#16203E;--line:#232F55;--line2:#2E3C6B;
+  --txt:#F2F5FF;--sub:#8E9BC0;--dim:#5E6C93;
+  --acc:#7C6FFF;--acc2:#5B4DFF;--green:#34E58A;--cyan:#2BD9FF;--gold:#FFC94D;--red:#FF4D6D;--pink:#FF5FA8;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',system-ui,sans-serif}
+html{scroll-behavior:smooth}
+body{background:radial-gradient(1200px 700px at 80% -10%,rgba(124,111,255,.14),transparent 60%),
+     radial-gradient(900px 600px at -10% 110%,rgba(43,217,255,.08),transparent 55%),var(--bg);
+     color:var(--txt);min-height:100vh}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:#26325C;border-radius:9px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ===== layout ===== */
+.shell{display:flex;min-height:100vh}
+.side{width:242px;flex-shrink:0;position:sticky;top:0;height:100vh;padding:22px 16px;display:flex;flex-direction:column;
+  background:linear-gradient(180deg,rgba(17,26,51,.6),rgba(13,20,40,.35));backdrop-filter:blur(14px);
+  border-right:1px solid var(--line)}
+.brand{display:flex;gap:11px;align-items:center;padding:6px 8px 20px}
+.brand .lg{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#8B7BFF,#5B4DFF);
+  display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 8px 26px rgba(91,77,255,.45)}
+.brand b{font-size:14.5px;letter-spacing:.6px;line-height:1.25;display:block}
+.brand small{color:var(--sub);font-size:9.5px;letter-spacing:1.6px;font-weight:600}
+.nav{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.nav a{display:flex;align-items:center;gap:11px;color:var(--sub);text-decoration:none;font-size:13px;font-weight:600;
+  padding:11px 13px;border-radius:12px;border:1px solid transparent;transition:.2s}
+.nav a:hover{color:var(--txt);background:rgba(124,111,255,.08)}
+.nav a.on{color:var(--txt);background:linear-gradient(90deg,rgba(124,111,255,.18),rgba(124,111,255,.04));border-color:rgba(124,111,255,.35)}
+.nav a .ic2{width:20px;text-align:center}
+.side .foot{margin-top:auto;display:flex;flex-direction:column;gap:10px}
+.livechip{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 13px;font-size:11px;color:var(--sub)}
+.pulse{width:9px;height:9px;border-radius:50%;background:var(--red);position:relative}
+.pulse.on{background:var(--green)}
+.pulse.on::after{content:'';position:absolute;inset:-5px;border-radius:50%;border:2px solid rgba(52,229,138,.35);animation:pp 1.6s infinite}
+@keyframes pp{0%{transform:scale(.6);opacity:1}100%{transform:scale(1.5);opacity:0}}
+.main{flex:1;min-width:0;padding:26px 30px 70px}
+@media(max-width:900px){.side{display:none}.main{padding:18px 14px 60px}}
+
+/* ===== topbar ===== */
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:22px}
+.top h1{font-size:21px;font-weight:800;letter-spacing:.3px}
+.top h1 em{font-style:normal;background:linear-gradient(90deg,#8B7BFF,#2BD9FF);-webkit-background-clip:text;background-clip:text;color:transparent}
+.top .who{color:var(--sub);font-size:11.5px;margin-top:3px}
+.actions{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{background:linear-gradient(135deg,#8B7BFF,#5B4DFF);border:none;color:#fff;font-weight:700;font-size:12px;
+  padding:10px 18px;border-radius:12px;cursor:pointer;letter-spacing:.3px;transition:.2s;box-shadow:0 6px 20px rgba(91,77,255,.35)}
+.btn:hover{transform:translateY(-1px)}
+.btn.ghost{background:rgba(255,255,255,.04);border:1px solid var(--line2);color:var(--txt);box-shadow:none}
+.btn.ghost:hover{border-color:var(--acc)}
+
+/* ===== hero KPI ===== */
+.hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:14px}
+.kpi{position:relative;overflow:hidden;border-radius:20px;padding:20px 22px;
+  background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+  animation:up .5s ease both}
+.kpi:nth-child(2){animation-delay:.06s}.kpi:nth-child(3){animation-delay:.12s}.kpi:nth-child(4){animation-delay:.18s}
+@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.kpi .halo{position:absolute;top:-40px;right:-30px;width:150px;height:150px;border-radius:50%;filter:blur(46px);opacity:.5}
+.kpi .row{display:flex;align-items:center;gap:10px}
+.kpi .em{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:20px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.kpi .k{font-size:10.5px;font-weight:700;letter-spacing:1.4px;color:var(--sub);text-transform:uppercase}
+.kpi .v{font-size:38px;font-weight:900;letter-spacing:-1px;margin-top:10px;
+  background:linear-gradient(90deg,#fff,#B9C2FF);-webkit-background-clip:text;background-clip:text;color:transparent}
+.kpi .d{font-size:11px;color:var(--sub);margin-top:4px}
+.mini{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:26px}
+.mini .m{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:15px;padding:13px 16px}
+.mini .m .k{font-size:9.5px;color:var(--sub);letter-spacing:1.1px;font-weight:700}
+.mini .m .v{font-size:21px;font-weight:800;margin-top:4px}
+
+section{margin-bottom:30px;scroll-margin-top:20px}
+.shead{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.shead .tt{font-size:15px;font-weight:800;letter-spacing:.5px;display:flex;gap:9px;align-items:center}
+.shead .ln{flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent);min-width:30px}
+.shead input{background:rgba(255,255,255,.04);border:1px solid var(--line2);color:var(--txt);border-radius:11px;padding:9px 14px;font-size:12px;outline:none;min-width:180px}
+.shead input:focus{border-color:var(--acc)}
+.badge{font-size:9.5px;font-weight:800;letter-spacing:.8px;padding:4px 10px;border-radius:999px;display:inline-block}
+.b-green{background:rgba(52,229,138,.13);color:var(--green);border:1px solid rgba(52,229,138,.45)}
+.b-cyan{background:rgba(43,217,255,.12);color:var(--cyan);border:1px solid rgba(43,217,255,.4)}
+.b-gold{background:rgba(255,201,77,.1);color:var(--gold);border:1px solid rgba(255,201,77,.4)}
+.b-gray{background:rgba(142,155,192,.1);color:var(--sub);border:1px solid rgba(142,155,192,.3)}
+.b-red{background:rgba(255,77,109,.12);color:var(--red);border:1px solid rgba(255,77,109,.45)}
+.b-pink{background:rgba(255,95,168,.12);color:var(--pink);border:1px solid rgba(255,95,168,.4)}
+
+/* charts */
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+.c6{grid-column:span 6}.c4{grid-column:span 4}.c8{grid-column:span 8}.c12{grid-column:span 12}
+@media(max-width:1000px){.c6,.c4,.c8{grid-column:span 12}}
+.panel{background:linear-gradient(180deg,rgba(22,32,62,.75),rgba(17,26,51,.9));border:1px solid var(--line);border-radius:20px;padding:18px 18px 14px;
+  transition:.25s;animation:up .5s ease both}
+.panel:hover{border-color:var(--line2);box-shadow:0 14px 40px rgba(0,0,0,.35)}
+.panel h3{font-size:11px;font-weight:700;letter-spacing:1.3px;color:var(--sub);text-transform:uppercase;margin-bottom:14px;display:flex;justify-content:space-between}
+.panel h3 span{color:var(--dim);letter-spacing:0;text-transform:none;font-weight:500}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:11px;color:var(--sub)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px}
+
+/* table */
+.tblwrap{background:linear-gradient(180deg,rgba(22,32,62,.6),rgba(17,26,51,.9));border:1px solid var(--line);border-radius:20px;padding:6px 14px 12px;overflow-x:auto}
+.tbl{width:100%;border-collapse:separate;border-spacing:0 6px;min-width:640px}
+.tbl th{font-size:9.5px;color:var(--sub);text-transform:uppercase;letter-spacing:1.2px;text-align:left;padding:10px 12px 4px}
+.tbl td{background:rgba(255,255,255,.025);padding:11px 12px;font-size:13px;border-top:1px solid rgba(35,47,85,.6);border-bottom:1px solid rgba(35,47,85,.6)}
+.tbl td:first-child{border-left:1px solid rgba(35,47,85,.6);border-radius:14px 0 0 14px}
+.tbl td:last-child{border-right:1px solid rgba(35,47,85,.6);border-radius:0 14px 14px 0}
+.tbl tr:hover td{background:rgba(124,111,255,.07)}
+.av{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#8B7BFF,#4F9CFF);display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;position:relative}
+.av small{position:absolute;bottom:-2px;right:-2px;width:11px;height:11px;border-radius:50%;background:#4A5578;border:2.5px solid #10182F}
+.av small.on{background:var(--green);box-shadow:0 0 8px rgba(52,229,138,.8)}
+.ic{width:38px;height:38px;border-radius:12px;object-fit:cover;border:1px solid var(--line2);background:var(--card2)}
+.muted{color:var(--sub);font-size:11px;line-height:1.5}
+.sv{font-size:9.5px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:7px;padding:2.5px 7px;color:var(--sub);display:inline-block;margin:2px 3px 0 0;font-weight:600}
+.note{background:rgba(255,201,77,.05);border:1px solid rgba(255,201,77,.3);border-radius:16px;padding:14px 16px;font-size:12.5px;color:var(--gold);line-height:1.75;margin-bottom:12px}
+.okb{background:rgba(52,229,138,.05);border:1px solid rgba(52,229,138,.3);border-radius:16px;padding:14px 16px;font-size:12.5px;color:var(--green);line-height:1.75;margin-bottom:12px}
+.empty{text-align:center;color:var(--sub);padding:26px;font-size:13px;background:rgba(255,255,255,.02);border:1px dashed var(--line2);border-radius:16px}
+.cards2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.kv{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:16px;padding:15px 17px;transition:.2s}
+.kv:hover{border-color:var(--line2)}
+.kv .k{font-size:9.5px;color:var(--sub);letter-spacing:1.2px;font-weight:700;text-transform:uppercase}
+.kv .v{font-size:14px;margin-top:6px;word-break:break-word;font-weight:600}
+footer{margin-top:44px;text-align:center;color:var(--dim);font-size:11px;letter-spacing:.4px}
+.mobbar{display:none}
+@media(max-width:900px){
+  .mobbar{display:flex;position:sticky;top:0;z-index:50;background:rgba(13,20,40,.85);backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line);padding:12px 14px;gap:10px;align-items:center}
+  .mobbar .lg2{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,#8B7BFF,#5B4DFF);display:flex;align-items:center;justify-content:center;font-size:17px}
+  .mobbar b{font-size:12.5px;letter-spacing:.5px}
+}
+
+/* ===== v2 PREMIUM LAYER ===== */
+body::before{content:'';position:fixed;inset:-30%;z-index:-1;pointer-events:none;
+  background:radial-gradient(700px 500px at 12% 8%,rgba(124,111,255,.13),transparent 60%),
+             radial-gradient(600px 500px at 88% 18%,rgba(43,217,255,.08),transparent 60%),
+             radial-gradient(700px 600px at 50% 105%,rgba(229,9,20,.10),transparent 60%);
+  animation:aur 16s ease-in-out infinite alternate}
+@keyframes aur{to{transform:translate3d(2%,1.5%,0) scale(1.06)}}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#4B3FA8,#2C2560);border-radius:8px;border:2px solid #070B18}
+::-webkit-scrollbar-track{background:transparent}
+.shell,.mobbar{position:relative}
+.hero{position:relative;overflow:hidden}
+.kpi{backdrop-filter:blur(18px);transition:transform .25s,box-shadow .25s}
+.kpi:hover{transform:translateY(-3px);box-shadow:0 18px 46px rgba(0,0,0,.45)}
+.shead .tt{background:linear-gradient(90deg,#E8ECFF,#B9C2FF);-webkit-background-clip:text;background-clip:text;color:transparent}
+.tbl tbody tr{transition:background .18s}
+.tbl tbody tr:hover{background:rgba(124,111,255,.06)}
+.badge{backdrop-filter:blur(6px)}
+#lock .crd-in{animation:lk .5s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes lk{from{transform:scale(.9) translateY(14px);opacity:0}to{transform:none;opacity:1}}
+.shine{position:relative;overflow:hidden}
+.shine::after{content:'';position:absolute;top:0;left:-70%;width:50%;height:100%;
+  background:linear-gradient(105deg,transparent,rgba(255,255,255,.13),transparent);
+  animation:shn 4.5s ease-in-out infinite}
+@keyframes shn{0%,55%{left:-70%}90%,100%{left:130%}}
+.chiprow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.tgl{position:relative;width:46px;height:25px;border-radius:14px;background:rgba(255,255,255,.10);border:1px solid var(--line2);cursor:pointer;transition:.2s}
+.tgl::after{content:'';position:absolute;top:2.5px;left:3px;width:17px;height:17px;border-radius:50%;background:#8E9BC0;transition:.2s}
+.tgl.on{background:linear-gradient(135deg,rgba(52,229,138,.35),rgba(52,229,138,.15));border-color:rgba(52,229,138,.5)}
+.tgl.on::after{left:23px;background:#34E58A;box-shadow:0 0 10px rgba(52,229,138,.7)}
+</style>
+</head>
+<body>
+<!-- ===== LOCK (2 trusted users only) ===== -->
+<div id="lock" style="position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:radial-gradient(900px 600px at 50% -10%,rgba(124,111,255,.16),transparent 60%),#070B18">
+  <div style="width:min(400px,92vw);background:linear-gradient(180deg,#16203E,#111A33);border:1px solid #232F55;border-radius:22px;padding:30px 28px;box-shadow:0 30px 80px rgba(0,0,0,.6)">
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:6px">
+      <div style="width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,#8B7BFF,#5B4DFF);display:flex;align-items:center;justify-content:center;font-size:22px">👑</div>
+      <div><b style="font-size:15px;letter-spacing:.5px">RAJNISH PRIME</b><div style="color:#8E9BC0;font-size:10px;letter-spacing:1.6px;font-weight:700">PRIVATE OWNER CENTER</div></div>
+    </div>
+    <div id="lockErr" style="display:none;color:#FF4D6D;font-size:12px;margin:10px 0 0;font-weight:600"></div>
+    <div style="display:flex;gap:8px;margin:16px 0 4px">
+      <button id="uBoss" class="btn" style="flex:1" onclick="pickUser('boss')">👑 Boss</button>
+      <button id="uDost" class="btn ghost" style="flex:1" onclick="pickUser('dost')">🤝 Co-Owner</button>
+    </div>
+    <input id="lkPw" type="password" placeholder="Password" style="width:100%;margin-top:12px;background:rgba(255,255,255,.05);border:1px solid #2E3C6B;border-radius:12px;padding:12px 14px;color:#F2F5FF;font-size:13px;outline:none">
+    <input id="lkOtp" inputmode="numeric" maxlength="6" placeholder="2FA code (6 digits)" style="width:100%;margin-top:10px;background:rgba(255,255,255,.05);border:1px solid #2E3C6B;border-radius:12px;padding:12px 14px;color:#F2F5FF;font-size:14px;letter-spacing:6px;text-align:center;outline:none">
+    <button class="btn" id="lkGo" style="width:100%;margin-top:14px;padding:13px" onclick="tryUnlock()">UNLOCK DASHBOARD</button>
+    <div style="color:#5E6C93;font-size:10.5px;margin-top:12px;text-align:center">Protected · password + 2FA required every time · only 2 trusted users</div>
+  </div>
+</div>
+<style>.btn:disabled{opacity:.55;transform:none}</style>
+<script>
+const USERS={
+  boss:{pw:'522e2f0070a1aec3e4db77399cdc823a734c535ddabe96ac5313f3507838979d',sec:'G6T56PNLG5YOGMG3'},
+  dost:{pw:'9139e2025cb5fbf0d8bb4e898bdf634e285994c70129786aeec830940fca1f8a',sec:'O4HOBY3A637DVAML'}
+};
+let who=null;
+function pickUser(u){who=u;
+  document.getElementById('uBoss').classList.toggle('ghost',u!=='boss');
+  document.getElementById('uDost').classList.toggle('ghost',u!=='dost');
+  document.getElementById('lockErr').style.display='none';}
+async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));
+  return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+function b32d(s){const A='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';let bits=0,val=0,out=[];
+  for(const c of s.toUpperCase()){const i=A.indexOf(c);if(i<0)continue;val=(val<<5)|i;bits+=5;
+    if(bits>=8){out.push((val>>(bits-8))&255);bits-=8}}return new Uint8Array(out)}
+async function totpOk(secret,code){
+  const key=await crypto.subtle.importKey('raw',b32d(secret),{name:'HMAC',hash:'SHA-1'},false,['sign']);
+  const cnt=Math.floor(Date.now()/30000);
+  for(const off of [0,-1,1]){
+    const buf=new ArrayBuffer(8),dv=new DataView(buf);dv.setUint32(4,cnt+off);
+    const sig=new Uint8Array(await crypto.subtle.sign('HMAC',key,buf));
+    const i=sig[sig.length-1]&15;
+    const c=String((((sig[i]&127)<<24)|(sig[i+1]<<16)|(sig[i+2]<<8)|sig[i+3])%1e6).padStart(6,'0');
+    if(c===code)return true}
+  return false}
+async function tryUnlock(){
+  const err=document.getElementById('lockErr'),btn=document.getElementById('lkGo');
+  if(!who){err.textContent='Select Boss or Co-Owner first';err.style.display='block';return}
+  const pw=document.getElementById('lkPw').value, otp=document.getElementById('lkOtp').value.trim();
+  btn.disabled=true;btn.textContent='CHECKING…';
+  const pwOk=(await sha(pw))===USERS[who].pw;
+  const otpOk=otp.length===6&&await totpOk(USERS[who].sec,otp);
+  btn.disabled=false;btn.textContent='UNLOCK DASHBOARD';
+  if(pwOk&&otpOk){const l=document.getElementById('lock');l.style.transition='opacity .35s';l.style.opacity='0';
+    setTimeout(()=>l.remove(),380)}
+  else{err.textContent=pwOk?'Wrong 2FA code — check Google Authenticator':'Wrong password';err.style.display='block'}}
+document.getElementById('lkOtp').addEventListener('keydown',e=>{if(e.key==='Enter')tryUnlock()});
+document.getElementById('lkPw').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('lkOtp').focus()});
+</script>
+<!-- ===== /LOCK ===== -->
+
+<div class="mobbar"><div class="lg2">👑</div><b>RAJNISH PRIME <span style="color:var(--acc)">· OWNER</span></b>
+  <span style="margin-left:auto" class="livechip"><span class="pulse" id="dot"></span><span id="conn">…</span></span></div>
+
+<div class="shell">
+  <aside class="side">
+    <div class="brand"><div class="lg">👑</div><div><b>RAJNISH PRIME</b><small>OWNER CENTER</small></div></div>
+    <nav class="nav">
+      <a href="#top" class="on"><span class="ic2">▦</span> Overview</a>
+      <a href="#sec-users"><span class="ic2">👥</span> Users</a>
+      <a href="#sec-apps"><span class="ic2">📦</span> Apps</a>
+      <a href="#sec-notices"><span class="ic2">🔔</span> Notices</a>
+      <a href="#sec-apk"><span class="ic2">🚀</span> App Update</a>
+      <a href="#sec-store"><span class="ic2">⚙️</span> Store &amp; Design</a>
+      <a href="#sec-admins"><span class="ic2">🛡️</span> Admin Logins</a>
+    </nav>
+    <div class="foot">
+      <div class="livechip"><span class="pulse" id="dot2"></span><span id="conn2">CONNECTING…</span></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" style="flex:1" onclick="loadAll(true)">⟳ Refresh</button>
+        <button class="btn ghost" id="autoBtn" onclick="toggleAuto()">AUTO·OFF</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main" id="top">
+    <div class="top">
+      <div>
+        <h1>Owner <em>Control Center</em></h1>
+        <div class="who" id="updated">Everything about your app — users, usage and store — live from Firebase.</div>
+      </div>
+      <div class="actions">
+        <button class="btn" onclick="loadAll(true)">⟳ Refresh</button>
+        <button class="btn ghost" id="autoBtn2" onclick="toggleAuto()">AUTO: OFF</button>
+      </div>
+    </div>
+
+    <!-- KPI hero -->
+    <div class="hero">
+      <div class="kpi shine"><div class="halo" style="background:#7C6FFF"></div>
+        <div class="row"><div class="em">👥</div><div class="k">Total Users</div></div>
+        <div class="v" id="sUsers">—</div><div class="d">devices running your app</div></div>
+      <div class="kpi"><div class="halo" style="background:#34E58A"></div>
+        <div class="row"><div class="em">🟢</div><div class="k">Online Now</div></div>
+        <div class="v" id="sOnline">—</div><div class="d">active in the last 2 minutes</div></div>
+      <div class="kpi"><div class="halo" style="background:#FF4D6D"></div>
+        <div class="row"><div class="em">⛔</div><div class="k">Blocked</div></div>
+        <div class="v" id="sBlocked">—</div><div class="d">restricted devices</div></div>
+      <div class="kpi"><div class="halo" style="background:#2BD9FF"></div>
+        <div class="row"><div class="em">⚡</div><div class="k">Total Opens</div></div>
+        <div class="v" id="sOpens">—</div><div class="d">all-time app opens</div></div>
+    </div>
+    <div class="mini">
+      <div class="m"><div class="k">ACTIVE TODAY</div><div class="v" id="sToday">—</div></div>
+      <div class="m"><div class="k">ACTIVE 7 DAYS</div><div class="v" id="sWeek">—</div></div>
+      <div class="m"><div class="k">LAPSED 7+ DAYS</div><div class="v" id="sLapsed">—</div></div>
+      <div class="m"><div class="k">LIVE APP CARDS</div><div class="v" id="sApps">—</div></div>
+      <div class="m"><div class="k">SERVER LINKS</div><div class="v" id="sSrv">—</div></div>
+      <div class="m"><div class="k">NOTICES</div><div class="v" id="sNotc">—</div></div>
+    </div>
+
+    <!-- charts -->
+    <section>
+      <div class="shead"><div class="tt">📈 Live Analytics</div><div class="ln"></div></div>
+      <div id="chartsHint"></div>
+      <div class="grid">
+        <div class="panel c8"><h3>New installs — last 14 days <span id="instTotal"></span></h3><div id="chInstalls"></div></div>
+        <div class="panel c4"><h3>Activity split</h3><div id="chStatus" style="display:flex;justify-content:center"></div>
+          <div class="legend" id="chStatusLg" style="justify-content:center"></div></div>
+        <div class="panel c6"><h3>Top devices</h3><div id="chDevices"></div></div>
+        <div class="panel c6"><h3>Android versions</h3><div id="chAndroid"></div></div>
+      </div>
+    </section>
+
+    <!-- users -->
+    <section id="sec-users">
+      <div class="shead"><div class="tt">👥 Users — A to Z</div><div class="ln"></div>
+        <input id="uq" placeholder="Search device / version…" oninput="users()">
+        <button class="btn ghost" onclick="exportCSV()">⬇ Export CSV</button>
+      </div>
+      <div id="usersHint"></div>
+      <div class="tblwrap"><table class="tbl">
+        <thead><tr><th>Device</th><th>Android</th><th>App</th><th>Opens</th><th>Installed</th><th>Last Active</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody id="usersBody"></tbody></table></div>
+    </section>
+
+    <!-- apps -->
+    <section id="sec-apps">
+      <div class="shead"><div class="tt">📦 Your Apps</div><div class="ln"></div>
+        <input id="aq" placeholder="Search app…" oninput="apps()">
+        <button class="btn" onclick="editApp(null)">＋ Add App</button></div>
+      <div class="tblwrap"><table class="tbl">
+        <thead><tr><th></th><th>App</th><th>Version</th><th>Servers</th><th>Tags</th><th>Order</th><th>Site-fix</th><th></th></tr></thead>
+        <tbody id="appsBody"></tbody></table></div>
+    </section>
+
+    <!-- notices -->
+    <section id="sec-notices">
+      <div class="shead"><div class="tt">🔔 Notices</div><div class="ln"></div>
+        <button class="btn" onclick="noticeComposer()">＋ Publish notice</button></div>
+      <div class="cards2" id="notices"></div>
+    </section>
+
+    <!-- store -->
+    <section id="sec-store">
+      <div class="shead"><div class="tt">⚙️ Store &amp; Design</div><div class="ln"></div></div>
+      <div class="cards2" id="store"></div>
+    </section>
+
+    <!-- apk-update -->
+    <section id="sec-apk">
+      <div class="shead"><div class="tt">🚀 App Update &amp; Download</div><div class="ln"></div></div>
+      <div class="cards2" id="apkBox"></div>
+    </section>
+
+    <!-- admins -->
+    <section id="sec-admins">
+      <div class="shead"><div class="tt">🛡️ Admin Panel Logins</div><div class="ln"></div></div>
+      <div class="cards2" id="admins"></div>
+    </section>
+
+    <footer>Made with ❤ for Rajnish Prime · live Firebase data · URLs are never displayed · analytics is anonymous</footer>
+  </main>
+</div>
+
+<script>
+const DB='https://rajnish-prime-faa2b-default-rtdb.europe-west1.firebasedatabase.app/';
+const J={};const $=i=>document.getElementById(i);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const g=async k=>{try{const r=await fetch(DB+k+'.json');J[k]=await r.json();return true}catch(e){return false}};
+const ago=t=>{if(!t)return'—';const d=Date.now()-t;if(d<6e4)return'just now';if(d<36e5)return Math.floor(d/6e4)+' min ago';if(d<864e5)return Math.floor(d/36e5)+' h ago';return Math.floor(d/864e5)+' d ago'};
+const ds=t=>!t?'—':new Date(t).toLocaleDateString();
+const serversOf=a=>{const s=a.servers;if(!s)return[];return Array.isArray(s)?s:Object.values(s)};
+const U=()=>Object.entries(J.analytics||{}).map(([id,u])=>({id,...u}));
+let idToken=null;
+async function fbSignIn(pwd){
+  const r=await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyCr9ZfCGagH4TmYsqmX_AUa6zN70LdCTVI',
+    {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:'himanshu74919@gmail.com',password:pwd,returnSecureToken:true})});
+  const d=await r.json();
+  if(d.idToken){idToken=d.idToken;return true}
+  throw new Error((d.error&&d.error.message)||'login failed');
+}
+async function fbWrite(path,method,body){
+  if(!idToken)await askFb();
+  const sep=path.includes('?')?'&':'?';
+  const r=await fetch(DB+path+sep+'auth='+idToken,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});
+  if(r.status===401){idToken=null;await askFb();return fbWrite(path,method,body)}
+  return r.ok;
+}
+function askFb(){
+  return new Promise((res,rej)=>{
+    const ov=document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;z-index:998;background:rgba(4,8,20,.8);display:flex;align-items:center;justify-content:center';
+    ov.innerHTML='<div style="width:min(360px,90vw);background:#111A33;border:1px solid #232F55;border-radius:18px;padding:24px">'
+      +'<b style="font-size:14px">🔐 Admin sign-in</b><div class="muted" style="margin:6px 0 12px">Needed once per session to make changes (block users, edit apps).</div>'
+      +'<input id="fbpw" type="password" placeholder="Firebase admin password" style="width:100%;background:rgba(255,255,255,.05);border:1px solid #2E3C6B;border-radius:12px;padding:12px;color:#F2F5FF;outline:none">'
+      +'<div id="fber" style="color:#FF4D6D;display:none;margin-top:8px;font-size:12px;font-weight:600"></div>'
+      +'<button class="btn" id="fbgo" style="width:100%;margin-top:12px;padding:12px">SIGN IN</button></div>';
+    document.body.appendChild(ov);
+    const go=async()=>{try{
+      document.getElementById('fbgo').disabled=true;
+      await fbSignIn(document.getElementById('fbpw').value);
+      ov.remove();res();
+    }catch(e){document.getElementById('fbgo').disabled=false;
+      const er=document.getElementById('fber');er.style.display='block';er.textContent='Wrong password';}};
+    document.getElementById('fbgo').onclick=go;
+    document.getElementById('fbpw').addEventListener('keydown',e=>{if(e.key==='Enter')go()});
+  });
+}
+function toast(t){const d=document.createElement('div');d.textContent=t;
+  d.style.cssText='position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:#1B2848;border:1px solid #2E3C6B;color:#F2F5FF;padding:11px 20px;border-radius:12px;font-size:12.5px;z-index:997;box-shadow:0 10px 30px rgba(0,0,0,.5)';
+  document.body.appendChild(d);setTimeout(()=>d.remove(),2400)}
+
+async function loadAll(m){
+  ['dot','dot2'].forEach(i=>$(i).classList.remove('on'));
+  ['conn','conn2'].forEach(i=>$(i).textContent='CONNECTING…');
+  const r=await Promise.all([g('analytics'),g('apps'),g('announcements'),g('config'),g('ui'),g('admin_sessions'),g('appupdate').catch(()=>null)]);
+  const live=r.every(Boolean);
+  ['dot','dot2'].forEach(i=>$(i).classList.toggle('on',live));
+  ['conn','conn2'].forEach(i=>$(i).textContent=live?'LIVE':'OFFLINE');
+  $('updated').textContent='Updated '+new Date().toLocaleTimeString()+(m?' · manual refresh':' · auto');
+  [stats,charts,users,apps,notices,apk,store,admins].forEach(fn=>{try{fn()}catch(e){console.warn('render',fn.name,e)}});
+  ['sUsers','sOnline','sBlocked','sOpens','sToday','sWeek','sLapsed','sApps','sSrv','sNotc'].forEach(i=>{if($(i).textContent==='—')$(i).textContent='0'});
+}
+function stats(){
+  const us=U(),now=Date.now();
+  $('sUsers').textContent=us.length;
+  $('sOnline').textContent=us.filter(u=>now-(u.lastActive||0)<12e4).length;
+  $('sBlocked').textContent=us.filter(u=>u.blocked).length;
+  $('sOpens').textContent=us.reduce((t,u)=>t+(u.opens||0),0).toLocaleString();
+  $('sToday').textContent=us.filter(u=>now-(u.lastActive||0)<864e5).length;
+  $('sWeek').textContent=us.filter(u=>now-(u.lastActive||0)<6048e5).length;
+  $('sLapsed').textContent=us.filter(u=>now-(u.lastActive||0)>=6048e5).length;
+  const apps=Object.values(J.apps||{}).filter(x=>x&&x.name);
+  $('sApps').textContent=apps.filter(x=>!x.hidden).length;
+  $('sSrv').textContent=apps.reduce((t,x)=>t+serversOf(x).length,0);
+  $('sNotc').textContent=Object.keys(J.announcements||{}).length;
+}
+
+/* ---------- charts ---------- */
+function areaChart(data){
+  const w=620,h=200,p=14,n=data.length;
+  const max=Math.max(...data.map(d=>d.v),1);
+  const X=i=>p+i*((w-2*p)/(n-1)), Y=v=>h-p-(v/max)*(h-2*p-16);
+  let line='M '+X(0)+' '+Y(data[0].v);
+  for(let i=1;i<n;i++){const mx=(X(i-1)+X(i))/2;line+=` C ${mx} ${Y(data[i-1].v)}, ${mx} ${Y(data[i].v)}, ${X(i)} ${Y(data[i].v)}`}
+  const area=line+` L ${X(n-1)} ${h-p} L ${X(0)} ${h-p} Z`;
+  let s=`<svg viewBox="0 0 ${w} ${h+16}" style="width:100%">`;
+  s+='<defs><linearGradient id="ar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7C6FFF" stop-opacity=".45"/><stop offset="1" stop-color="#7C6FFF" stop-opacity="0"/></linearGradient>'
+   +'<linearGradient id="ln" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8B7BFF"/><stop offset="1" stop-color="#2BD9FF"/></linearGradient></defs>';
+  [0.25,0.5,0.75].forEach(f=>{const y=p+f*(h-2*p-16);s+=`<line x1="${p}" y1="${y}" x2="${w-p}" y2="${y}" stroke="#1C2748" stroke-dasharray="3 5"/>`});
+  s+=`<path d="${area}" fill="url(#ar)"/><path d="${line}" fill="none" stroke="url(#ln)" stroke-width="2.6" stroke-linecap="round"/>`;
+  data.forEach((d,i)=>{
+    s+=`<circle cx="${X(i)}" cy="${Y(d.v)}" r="${d.v?3.4:2}" fill="${d.v?'#2BD9FF':'#39466E'}">${d.v?`<title>${d.k}: ${d.v} install${d.v>1?'s':''}</title>`:''}</circle>`;
+    if(i%2==0||n<=15)s+=`<text x="${X(i)}" y="${h+4}" fill="#5E6C93" font-size="8.5" text-anchor="middle" font-weight="600">${d.k}</text>`;
+  });
+  return s+'</svg>';
+}
+function donut(parts){
+  const total=parts.reduce((t,p)=>t+p.v,0);
+  if(!total)return'<div class="empty">No devices yet</div>';
+  const R=54,C=2*Math.PI*R;let off=0,s=`<svg viewBox="0 0 150 150" style="width:168px">`;
+  for(const p of parts){if(!p.v)continue;const len=p.v/total*C;
+    s+=`<circle cx="75" cy="75" r="${R}" fill="none" stroke="${p.c}" stroke-width="18" stroke-linecap="round" stroke-dasharray="${Math.max(len-3,1)} ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 75 75)"><title>${p.k}: ${p.v}</title></circle>`;off+=len}
+  s+=`<text x="75" y="71" text-anchor="middle" fill="#F2F5FF" font-size="21" font-weight="900">${total}</text>`;
+  s+=`<text x="75" y="88" text-anchor="middle" fill="#8E9BC0" font-size="8.5" letter-spacing="1.5">DEVICES</text></svg>`;
+  return s;
+}
+function hBars(data){
+  if(!data.length)return'<div class="empty">No data yet</div>';
+  const max=Math.max(...data.map(d=>d.v),1);
+  const cols=['#8B7BFF','#2BD9FF','#34E58A','#FFC94D','#FF5FA8','#FF8A5C'];
+  return data.slice(0,6).map((d,i)=>{
+    const p=Math.max(6,Math.round(d.v/max*92));
+    return `<div style="margin:9px 0"><div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:4px"><span style="font-weight:600">${esc(d.k)}</span><b style="color:#B9C2FF">${d.v}</b></div>
+    <div style="height:8px;background:rgba(255,255,255,.05);border-radius:6px"><div style="height:8px;width:${p}%;border-radius:6px;background:${cols[i%cols.length]};box-shadow:0 0 12px ${cols[i%cols.length]}55"></div></div></div>`;
+  }).join('');
+}
+function charts(){
+  const us=U(),now=Date.now();
+  const days=[];
+  for(let i=13;i>=0;i--){const d=new Date(now-i*864e5);days.push({k:d.getDate()+'',v:0})}
+  let tot=0;
+  for(const u of us){const f=u.firstSeen||0;if(!f)continue;const idx=13-Math.floor((now-f)/864e5);if(idx>=0&&idx<14){days[idx].v++;tot++}}
+  $('chInstalls').innerHTML=areaChart(days);
+  $('instTotal').textContent=us.length?us.length+' total devices':'';
+  const on=us.filter(u=>now-(u.lastActive||0)<12e4).length;
+  const d1=us.filter(u=>{const a=now-(u.lastActive||0);return a>=12e4&&a<864e5}).length;
+  const wk=us.filter(u=>{const a=now-(u.lastActive||0);return a>=864e5&&a<6048e5}).length;
+  const lp=us.filter(u=>now-(u.lastActive||0)>=6048e5).length;
+  const bl=us.filter(u=>u.blocked).length;
+  $('chStatus').innerHTML=donut([{k:'Online',v:on,c:'#34E58A'},{k:'Today',v:d1,c:'#2BD9FF'},{k:'This week',v:wk,c:'#FFC94D'},{k:'Lapsed',v:lp,c:'#4A5578'},{k:'Blocked',v:bl,c:'#FF4D6D'}]);
+  $('chStatusLg').innerHTML=[['Online','#34E58A'],['Today','#2BD9FF'],['This week','#FFC94D'],['Lapsed','#4A5578'],['Blocked','#FF4D6D']].map(x=>`<span><i style="background:${x[1]}"></i>${x[0]}</span>`).join('');
+  const dm={};us.forEach(u=>{const m=u.model||'Unknown';dm[m]=(dm[m]||0)+1});
+  $('chDevices').innerHTML=hBars(Object.entries(dm).map(([k,v])=>({k,v})).sort((a,b)=>b.v-a.v));
+  const av={};us.forEach(u=>{const a='Android '+(u.android||'?');av[a]=(av[a]||0)+1});
+  $('chAndroid').innerHTML=hBars(Object.entries(av).map(([k,v])=>({k,v})).sort((a,b)=>b.v-a.v));
+  $('chartsHint').innerHTML=us.length
+    ?'<div class="okb">✓ Analytics is live — every device that opens your app shows up here automatically (model, version, opens, online time). No personal data is collected.</div>'
+    :'<div class="note">⏳ Waiting for the first device — install the latest <b>RajnishPrime.apk (v2.10)</b> from the workspace and open it once. Your device will appear here with full graphs within seconds.</div>';
+}
+
+/* ---------- users ---------- */
+let uRows=[];
+function users(){
+  uRows=U().filter(u=>!String(u.id||'').startsWith('_')).sort((a,b)=>(b.lastActive||0)-(a.lastActive||0));
+  const q=($('uq').value||'').toLowerCase();
+  const now=Date.now();
+  const rows=uRows.filter(u=>!q||((u.model||'')+' '+(u.android||'')+' '+(u.appVersion||'')).toLowerCase().includes(q));
+  const tb=$('usersBody');tb.innerHTML='';
+  if(!rows.length){tb.innerHTML=`<tr><td colspan="8"><div class="empty">${uRows.length?'Nothing matches your search.':'No devices yet — open the app once.'}</div></td></tr>`;return}
+  for(const u of rows){
+    const last=u.lastActive||0,online=now-last<12e4,blocked=!!u.blocked;
+    let st=online?'<span class="badge b-green">● ONLINE</span>':now-last<864e5?'<span class="badge b-cyan">TODAY</span>':now-last<6048e5?'<span class="badge b-gold">RECENT</span>':'<span class="badge b-gray">LAPSED</span>';
+    if(blocked)st+=' <span class="badge b-red">BLOCKED</span>';
+    tb.innerHTML+=`<tr>
+      <td><span class="av">${esc((u.model||'?')[0].toUpperCase())}<small class="${online?'on':''}"></small></span>&nbsp;&nbsp;<b>${esc(u.model||'Unknown')}</b></td>
+      <td class="time">${esc(u.android||'—')}</td>
+      <td class="time">${esc(u.appVersion||'—')}</td>
+      <td><b style="color:#B9C2FF">${u.opens||0}</b></td>
+      <td class="time muted">${ds(u.firstSeen)}</td>
+      <td class="time muted">${ago(last)}</td>
+      <td>${st}</td>
+      <td><button class="btn ${blocked?'':'ghost'}" style="padding:8px 14px;font-size:11px;${blocked?'background:linear-gradient(135deg,#34E58A,#1FA96A)':''}"
+        onclick="toggleBlock('${u.id}',${!blocked})">${blocked?'UNBLOCK':'BLOCK'}</button></td></tr>`;
+  }
+}
+async function toggleBlock(id,toBlocked){
+  try{ const ok=await fbWrite('analytics/'+id+'.json','PATCH',{blocked:toBlocked});
+    ok?(loadAll(false),toast(toBlocked?'Device blocked ✓':'Device unblocked ✓')):toast('Write failed');
+  }catch(e){}
+}
+function exportCSV(){
+  let c='Device,Android,AppVersion,Opens,Installed,LastActive,Blocked\n';
+  for(const u of uRows)c+=[u.model,u.android,u.appVersion,u.opens||0,new Date(u.firstSeen||0).toISOString(),new Date(u.lastActive||0).toISOString(),u.blocked?'YES':'NO'].join(',')+'\n';
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:'text/csv'}));a.download='rajnish-prime-users.csv';a.click();
+}
+
+/* ---------- apps ---------- */
+let aRows=[];
+function apps(){
+  aRows=Object.entries(J.apps||{}).map(([id,a])=>({...a,id})).filter(x=>x.name);
+  aRows.sort((a,b)=>(a.order||9999)-(b.order||9999)||a.name.localeCompare(b.name));
+  const q=($('aq').value||'').toLowerCase();
+  const rows=aRows.filter(a=>!q||a.name.toLowerCase().includes(q));
+  const tb=$('appsBody');tb.innerHTML='';
+  if(!rows.length){tb.innerHTML='<tr><td colspan="8"><div class="empty">No apps found.</div></td></tr>';return}
+  for(const a of rows){
+    const sv=serversOf(a);
+    const tags=(a.featured?'<span class="badge b-pink">★ HOT</span> ':'')+(a.hidden?'<span class="badge b-red">HIDDEN</span>':'');
+    const fix=(a.cssExtra?'<span class="badge b-blue">CSS</span> ':'')+(a.jsExtra?'<span class="badge b-blue">JS</span>':'');
+    tb.innerHTML+=`<tr>
+      <td>${a.icon?`<img class="ic" src="${esc(a.icon)}" onerror="this.style.display='none'">`:`<span class="av">${esc(a.name[0])}</span>`}</td>
+      <td><b>${esc(a.name)}</b>${a.desc?`<div class="muted">${esc(a.desc.slice(0,70))}${a.desc.length>70?'…':''}</div>`:''}</td>
+      <td class="time">${esc(a.version||'—')}</td>
+      <td><b style="color:#B9C2FF">${sv.length}</b><div>${sv.map(s=>`<span class="sv">${esc(s.name||'Server')}</span>`).join('')}</div></td>
+      <td>${tags}</td><td>${a.order??'—'}</td><td>${fix||'<span class="muted">—</span>'}</td>
+      <td><button class="btn ghost" style="padding:8px 14px;font-size:11px" onclick="editApp('${a.id}')">EDIT</button></td></tr>`;
+  }
+}
+
+/* ---------- others ---------- */
+function notices(){
+  const list=Object.values(J.announcements||{}).sort((a,b)=>(b.time||0)-(a.time||0)).slice(0,6);
+  $('notices').innerHTML=list.length?list.map(n=>`<div class="kv"><div class="k">${(n.priority||'')==='urgent'?'<span class="badge b-red">URGENT</span> ':''}Published ${ago(n.time)}</div>
+    <div class="v">${esc(n.title||'')}</div><div class="muted" style="margin-top:6px;line-height:1.65">${esc(n.message||'')}</div></div>`).join('')
+    :'<div class="empty" style="width:100%">No notices published right now.</div>';
+}
+async function cfgWrite(node,val){
+  try{const ok=await fbWrite('config.json','PATCH',{[node]:val});
+    ok?(toast('Saved — live in app within ~2 min'),loadAll(false)):toast('Write failed');
+  }catch(e){toast('Write failed')}
+}
+async function uiWrite(node,val){
+  try{const ok=await fbWrite('ui.json','PATCH',{[node]:val});
+    ok?(toast('Saved — live in app within ~2 min'),loadAll(false)):toast('Write failed');
+  }catch(e){toast('Write failed')}
+}
+function noticeComposer(){
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;z-index:996;background:rgba(4,8,20,.82);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:30px 12px';
+  ov.innerHTML=`<div style="width:min(520px,96vw);background:linear-gradient(180deg,#16203E,#111A33);border:1px solid #232F55;border-radius:20px;padding:24px">
+    <div style="display:flex;align-items:center;margin-bottom:14px"><b style="font-size:16px">Publish a notice</b>
+      <button class="btn ghost" style="margin-left:auto;padding:7px 14px" onclick="this.closest('div').parentElement.parentElement.remove()">✕</button></div>
+    <div class="muted">Title *</div>
+    <input id="ncT" style="width:100%;margin-top:4px;background:rgba(255,255,255,.05);border:1px solid #2E3C6B;border-radius:11px;padding:11px 13px;color:#F2F5FF;font-size:13px;outline:none">
+    <div class="muted" style="margin-top:12px">Message *</div>
+    <textarea id="ncM" rows="4" style="width:100%;margin-top:4px;background:rgba(255,255,255,.05);border:1px solid #2E3C6B;border-radius:11px;padding:11px 13px;color:#F2F5FF;font-size:13px;outline:none;resize:vertical"></textarea>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <label style="font-size:12px;color:#B9C2FF;display:flex;gap:6px;align-items:center"><input type="checkbox" id="ncU"> Mark as URGENT (red badge)</label>
+    </div>
+    <button id="ncGo" class="btn" style="width:100%;margin-top:16px;padding:13px">PUBLISH — LIVE IN ~2 MIN</button>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.querySelector('#ncGo').onclick=async()=>{
+    const t=ov.querySelector('#ncT').value.trim(),m=ov.querySelector('#ncM').value.trim();
+    if(!t||!m){toast('Title and message are required');return}
+    const btn=ov.querySelector('#ncGo');btn.disabled=true;btn.textContent='Publishing…';
+    try{
+      const ok=await fbWrite('announcements.json','POST',{title:t,message:m,priority:ov.querySelector('#ncU').checked?'urgent':'normal',time:Date.now()});
+      if(!ok)throw new Error();
+      ov.remove();toast('Notice published — live in ~2 min ✓');loadAll(false);
+    }catch(e){btn.disabled=false;btn.textContent='PUBLISH — LIVE IN ~2 MIN';toast('Publish failed')}
+  };
+}
+function apk(){
+  const u=J.appupdate||{};
+  const apkUrl=u.apkUrl||'https://saverestrictedcontent.github.io/rajnishprime-download/RajnishPrime.apk';
+  $('apkBox').innerHTML=
+   `<div class="kv"><div class="k">Latest update pointer (app-ke UPDATE-dialog me dikhta)</div>
+      <div class="v">v${esc(u.versionName||'—')} · build ${esc(u.versionCode||'—')}</div>
+      <div class="muted" style="margin-top:6px;word-break:break-all">${esc(apkUrl)}</div>
+      <div class="chiprow">
+        <button class="btn" style="padding:8px 15px;font-size:11.5px" onclick="bumpVer()">🚀 Bump to current APK (auto-detect)</button>
+        <a class="btn ghost" style="padding:8px 15px;font-size:11.5px;text-decoration:none" href="${esc(apkUrl)}" target="_blank" rel="noopener">⬇ Open APK link</a>
+        <a class="btn ghost" style="padding:8px 15px;font-size:11.5px;text-decoration:none" href="https://saverestrictedcontent.github.io/rajnishprime-download/" target="_blank" rel="noopener">🌐 Public download page</a>
+      </div></div>
+    <div class="kv"><div class="k">Update notes shown to users</div><div class="v" style="white-space:pre-wrap">${esc(u.notes||'—')}</div></div>`;
+}
+async function bumpVer(){
+  try{
+    const head=await fetch('https://saverestrictedcontent.github.io/rajnishprime-download/RajnishPrime.apk',{method:'HEAD'});
+    const sha=head.headers.get('etag')||'';
+    const cur=J.appupdate||{};
+    const nc=Number(cur.versionCode||0)+1;
+    const notes=prompt('Update notes for users:',cur.notes||'Bug fixes and improvements');
+    if(notes===null)return;
+    const ok=await fbWrite('appupdate.json','PATCH',{versionCode:nc,versionName:(parseFloat(cur.versionName||'2.52')+0.01).toFixed(2),apkUrl:'https://saverestrictedcontent.github.io/rajnishprime-download/RajnishPrime.apk',notes:notes});
+    ok?(toast('Update pointer bumped ✓ — app dialog me dikhne lagega'),loadAll(false)):toast('Write failed');
+  }catch(e){toast('Failed')}
+}
+function store(){
+  const c=J.config||{},u=J.ui||{};
+  const on=b=>b?'<span class="badge b-green">ON</span>':'<span class="badge b-gray">OFF</span>';
+  const tg=(node,onState,fn)=>`<span class="tgl ${onState?'on':''}" onclick="${fn}('${node}',${!onState})"></span>`;
+  const a1=u.accent||'#7C6FFF',a2=u.accent2||'#5B4DFF';
+  $('store').innerHTML=
+   `<div class="kv"><div class="k">Store name</div><div class="v">${esc(c.storeName||'Rajnish Prime')}</div></div>
+    <div class="kv"><div class="k">Home subtitle</div><div class="v">${esc(u.homeSub||'—')}</div></div>
+    <div class="kv"><div class="k">Accent colours</div><div class="v"><span class="sv" style="background:${a1}33;border-color:${a1}"><span style="display:inline-block;width:9px;height:9px;border-radius:3px;background:${a1};margin-right:6px"></span>${a1}</span> <span class="sv" style="background:${a2}33;border-color:${a2}"><span style="display:inline-block;width:9px;height:9px;border-radius:3px;background:${a2};margin-right:6px"></span>${a2}</span></div></div>
+    <div class="kv"><div class="k">Cards — tap to change</div><div class="v">${u.cols||1} column · height ${u.cardH||74}dp · design v${u.version||1}
+      <div class="chiprow"><button class="btn ghost" style="padding:7px 13px;font-size:11px" onclick="uiWrite('cardH',${(u.cardH||74)<=74?92:74})">${(u.cardH||74)<=74?'↑ Make cards bigger':'↓ Make cards normal'}</button>
+      <button class="btn ghost" style="padding:7px 13px;font-size:11px" onclick="uiWrite('cols',${(u.cols||1)===1?2:1})">${(u.cols||1)===1?'▦ Switch to 2 columns':'▤ Switch to 1 column'}</button></div></div></div>
+    <div class="kv"><div class="k">Sections — tap a switch to toggle</div><div class="v">Carousel ${on(u.showCarousel)} ${tg('showCarousel',!!u.showCarousel,'uiWrite')} · Hub ${on(u.showHub)} ${tg('showHub',!!u.showHub,'uiWrite')} · Socials ${on(u.showSocials)} ${tg('showSocials',!!u.showSocials,'uiWrite')} · Search ${on(u.showSearch)} ${tg('showSearch',!!u.showSearch,'uiWrite')}</div></div>
+    <div class="kv"><div class="k">Modes — tap a switch to change</div><div class="v">Maintenance ${on(c.maintenance)} ${tg('maintenance',!!c.maintenance,'cfgWrite')} · Force update ${on(c.forceUpdate)} ${tg('forceUpdate',!!c.forceUpdate,'cfgWrite')}</div></div>`;
+}
+function admins(){
+  const s=Object.values(J.admin_sessions||{});
+  $('admins').innerHTML=s.length?s.map(d=>`<div class="kv"><div class="k">${d.revoked?'<span class="badge b-red">TERMINATED</span>':'<span class="badge b-green">ACTIVE</span>'} · ${ago(d.lastActive)}</div>
+    <div class="v">${esc(d.device||'Device')}</div><div class="muted">Android ${esc(d.android||'?')} · signed in ${ds(d.since)}</div></div>`).join('')
+    :'<div class="empty" style="width:100%">No admin logins registered yet.</div>';
+}
+
+/* ---------- auto ---------- */
+let auto=null;
+function toggleAuto(){
+  const set=(id,t)=>{const b=$(id);if(b)b.textContent=t};
+  if(auto){clearInterval(auto);auto=null;set('autoBtn','AUTO·OFF');set('autoBtn2','AUTO: OFF')}
+  else{auto=setInterval(()=>loadAll(false),60000);set('autoBtn','AUTO·60s');set('autoBtn2','AUTO: 60s');loadAll(false)}
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>{
+  document.querySelectorAll('.nav a').forEach(x=>x.classList.remove('on'));a.classList.add('on');
+}));
+loadAll(false).then(()=>toggleAuto()); // auto-refresh on by default (60s)
+
+/* ---- app editor ---- */
+const GUARD="/*ExternalGuard*/(function(){var RX=/t\\.me|telegram\\.(me|dog)|wa\\.me|whatsapp\\.com|chat\\.whatsapp/i;"
+ +"var OK=/\\+cL3-XYVYH6VkYmNl|channel\\/0029VbDI4yFK5cDHjEHcNk16/;"
+ +"var b=function(e){var t=e.target;while(t&&t!==document){if(t.tagName==='A'&&t.href&&RX.test(t.href)&&!OK.test(t.href)){e.preventDefault();e.stopPropagation();return false}if(t.tagName==='BUTTON'&&t.textContent&&RX.test(t.textContent)&&!OK.test(t.textContent)){e.preventDefault();e.stopPropagation();return false}t=t.parentNode}};"
+ +"['click','mousedown','touchstart','auxclick'].forEach(function(ev){document.addEventListener(ev,b,true)});"
+ +"var n=function(){document.querySelectorAll('a[href]').forEach(function(a){if(RX.test(a.href)&&!OK.test(a.href)){a.style.pointerEvents='none';a.style.opacity='0.35';a.removeAttribute('href')}})};"
+ +"n();try{new MutationObserver(n).observe(document.documentElement,{childList:true,subtree:true})}catch(e){}})();";
+function enc(str){
+  if(!str)return'';
+  if(str.startsWith('enc:'))return str;
+  const k='RajnishPrime-key';const bytes=new TextEncoder().encode(str);let o='';
+  for(let i=0;i<bytes.length;i++)o+=String.fromCharCode(bytes[i]^k.charCodeAt(i%k.length));
+  return 'enc:'+btoa(o).replace(/\+/g,'-').replace(/\//g,'_');
+}
+function editApp(id){
+  const a=id?(aRows.find(x=>x.id===id)||{}):{};
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;z-index:996;background:rgba(4,8,20,.82);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:30px 12px';
+  ov.innerHTML=`<div style="width:min(560px,96vw);background:linear-gradient(180deg,#16203E,#111A33);border:1px solid #232F55;border-radius:20px;padding:24px">
+    <div style="display:flex;align-items:center;margin-bottom:14px"><b style="font-size:16px">${id?'Edit app':'Add new app'}</b>
+      <button class="btn ghost" style="margin-left:auto;padding:7px 14px" onclick="this.closest('div').parentElement.parentElement.remove()">✕</button></div>
+    <div id="edErr" style="color:#FF4D6D;font-size:12px;display:none;margin-bottom:8px;font-weight:600"></div>
+    <div class="muted">App name *</div>
+    <input id="edName" value="${esc(a.name||'')}" style="wInp">
+    <div class="muted" style="margin-top:10px">Icon image link (png)</div>
+    <input id="edIcon" value="${esc(a.icon||'')}" style="wInp">
+    <div style="display:flex;gap:10px">
+      <div style="flex:1"><div class="muted" style="margin-top:10px">Version</div><input id="edVer" value="${esc(a.version||'')}" style="wInp"></div>
+      <div style="flex:1"><div class="muted" style="margin-top:10px">Size</div><input id="edSize" value="${esc(a.size||'')}" style="wInp"></div>
+      <div style="flex:1"><div class="muted" style="margin-top:10px">Order</div><input id="edOrder" type="number" value="${a.order??1000}" style="wInp"></div>
+    </div>
+    <div class="muted" style="margin-top:10px">Description (optional)</div>
+    <input id="edDesc" value="" style="wInp">
+    <div style="display:flex;gap:16px;margin-top:12px">
+      <label style="font-size:12.5px"><input type="checkbox" id="edHot" ${a.featured?'checked':''}> ★ Featured (HOT)</label>
+      <label style="font-size:12.5px"><input type="checkbox" id="edHid" ${a.hidden?'checked':''}> Hidden</label>
+    </div>
+    <div style="display:flex;align-items:center;margin:16px 0 8px"><b style="font-size:12.5px">🌐 Servers</b>
+      <button class="btn ghost" style="margin-left:auto;padding:6px 12px;font-size:11px" onclick="addSvRow()">＋ Add server</button></div>
+    <div id="svBox"></div>
+    <div class="muted" style="margin-top:6px">Server 1 = main link. URLs are encrypted automatically before saving.</div>
+    <button class="btn" id="edSave" style="width:100%;margin-top:16px;padding:13px">SAVE &amp; GO LIVE</button>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.querySelector('#edDesc').value=(a.desc||'').replace(/"/g,'&quot;');
+  const st=document.createElement('style');st.textContent='[style*="wInp"]{width:100%;margin-top:4px;background:rgba(255,255,255,.05);border:1px solid #2E3C6B;border-radius:11px;padding:11px 13px;color:#F2F5FF;font-size:13px;outline:none}[style*="wInp"]:focus{border-color:#7C6FFF}input[type=checkbox]{accent-color:#7C6FFF;width:15px;height:15px;vertical-align:-2px}';document.head.appendChild(st);
+  window.addSvRow=(n,u)=>{
+    const r=document.createElement('div');r.style.cssText='display:flex;gap:8px;margin-top:8px';
+    r.innerHTML='<input class="svN" placeholder="Name" value="'+esc(n||'')+'" style="wInp;flex:1">'
+      +'<input class="svU" placeholder="https://…" value="'+esc(u||'')+'" style="wInp;flex:2">'
+      +'<button class="btn ghost" style="padding:6px 12px;color:#FF4D6D" onclick="this.parentElement.remove()">✕</button>';
+    ov.querySelector('#svBox').appendChild(r);
+  };
+  (a.servers?serversOf(a):[]).forEach(sv=>addSvRow('', ''));
+  (async()=>{const rows=[...ov.querySelectorAll('#svBox>div')];
+    const list=a.servers?serversOf(a):[];
+    for(let i=0;i<rows.length&&i<list.length;i++){
+      const u=list[i].url||'';
+      if(u.startsWith('enc:')){try{const b=u.slice(4)+'='.repeat((4-u.slice(4).length%4)%4);
+        const raw=atob(b.replace(/-/g,'+').replace(/_/g,'/'));const k='RajnishPrime-key';
+        let o='';for(let j=0;j<raw.length;j++)o+=String.fromCharCode(raw.charCodeAt(j)^k.charCodeAt(j%k.length));
+        rows[i].querySelector('.svU').value=o;rows[i].querySelector('.svN').value=list[i].name==='Server 1'?'':(list[i].name||'');}catch(e){}}
+    }
+    if(!rows.length)addSvRow('','');
+  })();
+  ov.querySelector('#edSave').onclick=async()=>{
+    const g=i=>ov.querySelector(i).value.trim();
+    const name=g('#edName');
+    if(!name){const e=ov.querySelector('#edErr');e.style.display='block';e.textContent='App name is required';return}
+    const btn=ov.querySelector('#edSave');btn.disabled=true;btn.textContent='SAVING…';
+    try{
+      const svs=[...ov.querySelectorAll('#svBox>div')].map(r=>({n:r.querySelector('.svN').value.trim(),u:r.querySelector('.svU').value.trim()})).filter(x=>x.u);
+      const serversObj={};svs.forEach((x,i)=>{serversObj[String(i*2+1)]={name:x.n||('Server '+(i+1)),url:enc(x.u)}});
+      let js=(a.jsExtra||'');
+      if(!js.includes('ExternalGuard'))js=GUARD+(js?('\n'+js):'');
+      const payload={
+        name,
+        url:svs.length?enc(svs[0].u):(a.url||''),
+        icon:g('#edIcon'),version:g('#edVer'),size:g('#edSize'),
+        desc:g('#edDesc'),order:parseInt(g('#edOrder'))||1000,
+        featured:ov.querySelector('#edHot').checked,
+        hidden:ov.querySelector('#edHid').checked,
+        hideHeader:a.hideHeader!==undefined?a.hideHeader:true,
+        showTitle:a.showTitle!==undefined?a.showTitle:true,
+        cardColor:a.cardColor||'',screenshots:a.screenshots||'',
+        cssExtra:a.cssExtra||'',jsExtra:js
+      };
+      if(Object.keys(serversObj).length)payload.servers=serversObj;
+      const newId=id||('app'+Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36));
+      const ok=await fbWrite('apps/'+newId+'.json','PUT',payload);
+      if(!ok)throw new Error('write failed');
+      ov.remove();toast(id?'App updated — live in ~2 min ✓':'App added — live in ~2 min ✓');
+      loadAll(false);
+    }catch(e){btn.disabled=false;btn.textContent='SAVE & GO LIVE';
+      const er=ov.querySelector('#edErr');er.style.display='block';er.textContent='Save failed: '+(e.message||'check login');}
+  };
+}
+</script>
+</body>
+</html>
