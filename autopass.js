@@ -1,9 +1,10 @@
 (function(){
-if(window.__rpap>=27)return;window.__rpap=27;
+if(window.__rpap>=28)return;window.__rpap=28;
 /* ===== v9: NEW-TAB KILLER (gate arolinks same-tab khole — WebView me chain chale) ===== */
 try{
  window.open=function(u){if(u){try{var _s=String(u);
-  if(/wa\.me|whatsapp\.com|t\.me|telegram\.me|messenger\.com/i.test(_s)){try{location.href=_s;}catch(e){}return {closed:false,close:function(){},focus:function(){},postMessage:function(){},opener:window};}
+  if(/wa\.me|whatsapp\.com|t\.me|telegram\.me|messenger\.com|instagram\.com/i.test(_s)&&!window.__rpSocIsOwn(_s)){return null;}
+  if(/wa\.me|whatsapp\.com|t\.me|telegram\.me|messenger\.com/i.test(_s)&&window.__rpSocIsOwn(_s)){try{location.href=_s;}catch(e){}return {closed:false,close:function(){},focus:function(){},postMessage:function(){},opener:window};}
   try{location.href=_s;}catch(e){}}catch(e){}}return null;};
 }catch(e){}
 try{
@@ -633,6 +634,46 @@ function dishaLogin(){
   x.send();
  }catch(e){}
 }
+
+/* ===== v28: FOREIGN-CHANNEL BLOCKER — visited-sites ke telegram/whatsapp/instagram/youtube-channel
+   links click-proof (no redirect); ONLY owner-configured channels pass. Fail-closed:
+   future urls are auto-blocked too (boss-policy). YouTube video-content stays allowed. ===== */
+if(!window.__rpSocIsOwn){
+ try{
+  var _rpO=[];
+  try{_rpO=(window.__rpOwnerSocials||[]).map(function(u){return String(u||'').toLowerCase().replace(/^[a-z]+:\/\//,'').replace(/[?#].*$/,'').replace(/\/+$/,'');});}catch(e){}
+  window.__rpSocIsOwn=function(h){
+   try{
+    var b=String(h||'').toLowerCase().replace(/^[a-z]+:\/\//,'').replace(/[?#].*$/,'').replace(/\/+$/,'');
+    for(var i=0;i<_rpO.length;i++){var o2=_rpO[i];if(!o2)continue;
+     if(b===o2||b.indexOf(o2+'/')===0||o2.indexOf(b+'/')===0)return true;}
+    return false;
+   }catch(e){return false;}
+  };
+ }catch(e){}
+}
+function socialGuard(){
+ try{
+  if(!window.__rpSocOn){window.__rpSocOn=1;
+   document.addEventListener('click',function(e){
+    try{
+     if(e.__rpSoc)return;e.__rpSoc=1;
+     var a=e.target;while(a&&a.tagName!=='A')a=a.parentElement;
+     if(!a)return;
+     var h=a.getAttribute('href')||'';
+     if(!h)return;
+     var own=window.__rpSocIsOwn;
+     if(/t\.me|telegram\.me|wa\.me|whatsapp\.com|messenger\.com|instagram\.com/i.test(h)){
+      if(!own(h)){try{e.preventDefault();e.stopPropagation();}catch(x){}try{a.removeAttribute('href');}catch(x2){}}
+     }else if(/youtube\.com\/channel|youtube\.com\/c\/|youtube\.com\/user\/|youtube\.com\/@|sub_confirmation=1/i.test(h)){
+      if(!own(h)){try{e.preventDefault();e.stopPropagation();}catch(x){}}
+     }
+    }catch(e){}
+   },true);
+  }
+ }catch(e){}
+}
+
 function rpOverlay(){ /* fullscreen-overlay skeleton */
  var w=document.createElement('div');w.id='__rpapPlay';
  w.style.cssText='position:fixed;inset:0;z-index:2147483647;background:#000';
@@ -807,6 +848,7 @@ function keyGateScan(){
 
 var last=0,lastx=0;
 function scan(){
+ socialGuard();
  keyGateScan();
  wallKill();
  dishaLogin();
