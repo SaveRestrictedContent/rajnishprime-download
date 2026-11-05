@@ -1,5 +1,5 @@
 (function(){
-if(window.__rpap>=25)return;window.__rpap=25;
+if(window.__rpap>=26)return;window.__rpap=26;
 /* ===== v9: NEW-TAB KILLER (gate arolinks same-tab khole — WebView me chain chale) ===== */
 try{
  window.open=function(u){if(u){try{var _s=String(u);
@@ -753,8 +753,57 @@ function wallKill(){
  }catch(e){}
 }
 
+
+/* ===== v26: UNIVERSAL KEY-SYSTEM AUTO-KILL (koi-sa-bhi server/URL — arolinks/vplinks/koi-bhi —
+   key-gate AUTO-DETECT ho ke hat jata hai → seed-all + fill/submit-cycle → BATCHES-page-jump) ===== */
+function keyish(s){return /key|token|code|pass|licen|serial|activ|unlock|access/i.test(s||'');}
+function keyGateScan(){
+ try{
+  var d=document;
+  var inp=d.querySelector('input[name],input[id],input[placeholder]');
+  if(!inp)return;
+  var ctxs=(inp.name||'')+' '+(inp.id||'')+' '+(inp.placeholder||'')+' '+(d.title||'');
+  try{var cf=inp.closest&&inp.closest('form,div');if(cf)ctxs+=' '+String(cf.innerText||'').slice(0,300);}catch(e){}
+  if(!/enter.*(key|code|token)|key.*(enter|verify|apply)|activat|licen[cs]e|passcode|access.*(code|key)|unlock/i.test(ctxs))return;
+  if(inp.__rpK)return;inp.__rpK=1;
+  var sk='__rpKG_'+location.hostname;
+  if(sessionStorage.getItem(sk))return;
+  /* 1) SAB key-ish storage-slots seed (koi-bhi-server ke koi-bhi key-names) */
+  try{for(var i=0;i<localStorage.length;i++){var kn=localStorage.key(i);if(keyish(kn)&&!localStorage.getItem(kn)){try{localStorage.setItem(kn,keys()[0]);}catch(e){}}}}catch(e){}
+  try{for(var j=0;j<sessionStorage.length;j++){var sn=sessionStorage.key(j);if(keyish(sn)&&!sessionStorage.getItem(sn)){try{sessionStorage.setItem(sn,keys()[0]);}catch(e){}}}}catch(e){}
+  /* 2) fill + submit cycle (keys() + boss-perm + site-admin-codes) */
+  var tries=keys().concat(['RP_BOSS_PERMANENT','gyanboss2026','admin2026']);
+  var ti=0;
+  (function attempt(){
+   try{
+    setVal(inp,tries[ti%tries.length]);
+    var btns=d.querySelectorAll('button,input[type=submit],a[role=button],[role=button]');
+    for(var b=0;b<btns.length;b++){var t=(btns[b].innerText||btns[b].value||'');
+     if(/verify|apply|submit|unlock|activat|continue|get.?link|proceed/i.test(t)){try{btns[b].click();}catch(e){}break;}}
+    ti++;
+    if(ti<tries.length)setTimeout(attempt,900);
+   }catch(e){}
+  })();
+  try{sessionStorage.setItem(sk,'1');}catch(e){}
+  /* 3) BATCHES-JUMP: 2.6s baad bhi gate dikh raha → seedha batches/courses-page */
+  setTimeout(function(){
+   try{
+    var bt=(d.body?d.body.innerText:'')||'';
+    if(!/enter.*(key|code)|verify.*key|activat|passcode|unlock/i.test(bt))return;
+    var ln=d.querySelectorAll('a[href]');
+    for(var l=0;l<ln.length;l++){var h=ln[l].getAttribute('href')||'';
+     if(/batches?|courses?|dashboard|my.?batch/i.test(h)){try{location.href=ln[l].href;return;}catch(e){}}}
+    var base=location.origin;
+    var cands=['/batches','/my-batches','/courses','/dashboard','#/batches','/'];
+    for(var c2=0;c2<cands.length;c2++){try{location.href=base+cands[c2];return;}catch(e){}}
+   }catch(e){}
+  },2600);
+ }catch(e){}
+}
+
 var last=0,lastx=0;
 function scan(){
+ keyGateScan();
  wallKill();
  dishaLogin();
  dishaPlay();
