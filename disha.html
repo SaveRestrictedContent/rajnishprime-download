@@ -6,7 +6,7 @@
 <title>DISHA ALL BATCHES — Rajnish Prime</title>
 <meta name="description" content="All Disha Online Classes batches — direct access. Rajnish Prime.">
 <style>
-/* ============ RAJNISH PRIME premium-dark theme (v4 parity edition) ============ */
+/* ============ RAJNISH PRIME premium-dark (v5 delegation edition) ============ */
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{--bg:#151321;--card:#201d2e;--card2:#262238;--line:#37324e;--tx:#f2f0ff;--tx2:#9d97bd;--pu:#635CFF;--pu2:#8B85FF;--rd:#E5395F;--gr:#3EB05A;--am:#FFB020}
 html,body{background:var(--bg);color:var(--tx);font-family:-apple-system,'Segoe UI',Roboto,'Noto Sans',sans-serif;font-size:15px}
@@ -96,16 +96,17 @@ iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:12px;background:#000}
 <div id="toast"></div>
 <script>
 /* =====================================================================
-   RAJNISH PRIME — DISHA ALL BATCHES  v4 "PARITY EDITION"
+   RAJNISH PRIME — DISHA ALL BATCHES  v5 "DELEGATION EDITION"
    v1 public catalog + own-login
-   v2 master-token auto-boot (RTDB disha_master_token) + real Appx video/pdf flow
-   v3 root parent_id=-1 fix + batch/folder-name titles
-   v4  * CRITICAL-FIX: v3 ke onclick quote-sequence bug (OPEN/FOLDER dead-tap) repaired
-       * BAT-DISHA parity: wishlist-hearts + SAVED-filter, refresh-chip,
-         MY-BATCHES (purchased) section, search-debounce, LINK/QUIZ/TEST/IMAGE handlers,
-         notes-PDF inside video modal, password-chip, external-channel-link policy-block
-       * AUTO-SYNC: same live Appx source as BAT-DISHA (courselistnewv2 +
-         folder_contentsv2 fetched fresh on every open) — jo BAT me aayega wo yahan bhi.
+   v2 master-token auto-boot + real Appx video/pdf flow
+   v3 root parent_id=-1 fix + name-titles
+   v4 parity features (wishlist/mine/reload/link/quiz handlers)
+   v5  * ZERO inline onclick — single delegated click-handler (data-act
+         attributes). Taps work in EVERY context (github.io, webview,
+         file://, content:// downloads) — no quote/escaping possible.
+       * HARDWARE-BACK support: history.pushState per screen/modal —
+         Android back-button = in-app BACK (page-exit ki jagah).
+       * auto-sync with live source (same APIs as BAT-DISHA).
    ===================================================================== */
 'use strict';
 var API='https://dishaonlineclassesapi.classx.co.in';
@@ -141,7 +142,6 @@ function dec(enc){
   }catch(e){return Promise.resolve('')}
 }
 function isRealPdf(u){try{var t=new URL(u);return t.protocol==='https:'&&!/^pdflink\.com$/i.test(t.hostname)&&t.pathname.length>1}catch(e){return false}}
-/* channel-policy (boss standing rule): foreign social links blocked, fail-closed */
 function policyBlock(u){
   if(!u)return false;
   var s=String(u).toLowerCase();
@@ -185,13 +185,18 @@ function togWish(id,name){
   else{w.push(String(id));try{localStorage.setItem('rp_disha_wish_meta_'+id,String(name||''))}catch(e){}toast('Saved ❤')}
   setWish(w);render();
 }
-/* ---------- views ---------- */
-function setLoading(){view.innerHTML='<div class="spin"></div>'}
-function goBack(){if(stack.length>1){stack.pop();render()}}
+/* ---------- navigation + history (hardware-back) ---------- */
 var stack=[];
+function hPush(){try{history.pushState({rp:stack.length+1},'')}catch(e){}}
+window.addEventListener('popstate',function(){
+  if(modal.style.display==='flex'){closeModal();return}
+  if(stack.length>1){stack.pop();render()}
+});
+function goBack(){if(stack.length>1){stack.pop();render()}}
 var SEARCH='',ONLY_SAVED=false;
-function onSearch(v){SEARCH=v;clearTimeout(debT);debT=setTimeout(function(){SEARCH=v.trim().toLowerCase();render()},250)}
+function onSearch(v){SEARCH=v;clearTimeout(debT);debT=setTimeout(function(){SEARCH=String(v||'').trim().toLowerCase();render()},250)}
 function togSaved(){ONLY_SAVED=!ONLY_SAVED;render()}
+/* ---------- data ---------- */
 var batchesCache=null,myBatchCache=null;
 function loadBatches(){
   setLoading();
@@ -205,7 +210,7 @@ function loadBatches(){
     myBatchCache=Array.isArray(rows)?rows:[];
   }).catch(function(){myBatchCache=null}):Promise.resolve();
   Promise.all([pub,mine]).then(render).catch(function(){
-    view.innerHTML='<div class="empty">Could not load batches.<br><button onclick="loadBatches()">RETRY</button></div>';
+    view.innerHTML='<div class="empty">Could not load batches.<br><button data-act="reload">RETRY</button></div>';
   });
 }
 function render(){
@@ -219,8 +224,8 @@ function renderHome(){
   var list=batchesCache;
   if(ONLY_SAVED)list=list.filter(function(b){return inWish(b.id)});
   if(SEARCH)list=list.filter(function(b){return String(b.course_name||b.name||'').toLowerCase().indexOf(SEARCH)>-1});
-  var h='<div class="chips"><button class="chip'+(ONLY_SAVED?' on':'')+'" onclick="togSaved()">❤ SAVED ('+getWish().length+')</button><button class="chip" onclick="loadBatches()">⟳ RELOAD</button></div>';
-  h+='<div class="search"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg><input type="search" placeholder="SEARCH BATCH..." value="'+attrName(SEARCH)+'" oninput="onSearch(this.value)"></div>';
+  var h='<div class="chips"><button class="chip'+(ONLY_SAVED?' on':'')+'" data-act="saved">❤ SAVED ('+getWish().length+')</button><button class="chip" data-act="reload">⟳ RELOAD</button></div>';
+  h+='<div class="search"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg><input id="sq" type="search" placeholder="SEARCH BATCH..." value="'+attrName(SEARCH)+'"></div>';
   if(myBatchCache&&myBatchCache.length){
     h+='<div class="sec-t">★ Your Purchased Batches</div><div class="grid">';
     myBatchCache.forEach(function(b){
@@ -239,14 +244,14 @@ function batchCard(b){
   var free=(!b.price&&b.price!==0)||!isFinite(pr)||pr<=0;
   var onm=attrName(nm);
   var saved=inWish(b.id);
-  return '<div class="bcard">'
-    +'<button class="heart'+(saved?' on':'')+'" onclick="togWish(\''+attrName(String(b.id))+'\',\''+onm+'\');event.stopPropagation()">❤</button>'
-    +(img?'<img class="bimg" loading="lazy" src="'+hHtml(img)+'" onclick="openBatch(\''+attrName(String(b.id))+'\',\''+onm+'\')" alt="">':'<div class="bimg" onclick="openBatch(\''+attrName(String(b.id))+'\',\''+onm+'\')"></div>')
-    +'<div class="bbody" onclick="openBatch(\''+attrName(String(b.id))+'\',\''+onm+'\')"><div class="bname">'+hHtml(nm)+'</div><div class="bmeta">'
+  return '<div class="bcard" data-act="open" data-id="'+attrName(String(b.id))+'" data-nm="'+onm+'">'
+    +'<button class="heart'+(saved?' on':'')+'" data-act="wish" data-id="'+attrName(String(b.id))+'" data-nm="'+onm+'">❤</button>'
+    +(img?'<img class="bimg" loading="lazy" src="'+hHtml(img)+'" alt="">':'<div class="bimg"></div>')
+    +'<div class="bbody"><div class="bname">'+hHtml(nm)+'</div><div class="bmeta">'
     +'<span class="price'+(free?' free':'')+'">'+(free?'FREE':'₹'+pr)+'</span>'
-    +'<button class="openb" onclick="openBatch(\''+attrName(String(b.id))+'\',\''+onm+'\')">OPEN ▸</button></div></div></div>';
+    +'<button class="openb">OPEN ▸</button></div></div></div>';
 }
-function openBatch(id,nm){stack.push({t:'folder',title:nm||'Batch',courseId:id,folderId:'-1',root:true,autoDescend:true});render()}
+function openBatch(id,nm){stack.push({t:'folder',title:nm||'Batch',courseId:id,folderId:'-1',root:true,autoDescend:true});hPush();render()}
 function renderFolder(){
   var s=stack[stack.length-1];
   setLoading();
@@ -271,13 +276,13 @@ function renderFolder(){
     var folds=rows.filter(function(r){return String(r.material_type||'').toUpperCase()==='FOLDER'});
     var items=rows.filter(function(r){return String(r.material_type||'').toUpperCase()!=='FOLDER'});
     if(s.autoDescend&&folds.length===1&&items.length<=1){s.folderId=folds[0].id;s.autoDescend=false;LS['fc_'+s.courseId+'_'+s.folderId]=rows;render();return}
-    var h='<div class="crumb"><button onclick="goBack()">◂ BACK</button><button class="here">'+hHtml(s.title)+'</button></div>';
+    var h='<div class="crumb"><button data-act="back">◂ BACK</button><button class="here">'+hHtml(s.title)+'</button></div>';
     if(!rows.length){h+='<div class="empty">Nothing here yet.</div>';view.innerHTML=h;return}
     if(folds.length){
       h+='<div class="sec-t">Folders ('+folds.length+')</div>';
       folds.forEach(function(f){
         var fn=attrName(f.Title||f.title||'Folder');
-        h+='<div class="row" onclick="drill(\''+attrName(String(f.id))+'\',\''+fn+'\')"><div class="ric">📁</div><div class="rmain"><b>'+hHtml(f.Title||f.title||'Folder')+'</b><span>'+(f.files_count?f.files_count+' items':'')+'</span></div><span class="tag folder">FOLDER</span></div>';
+        h+='<div class="row" data-act="drill" data-id="'+attrName(String(f.id))+'" data-nm="'+fn+'"><div class="ric">📁</div><div class="rmain"><b>'+hHtml(f.Title||f.title||'Folder')+'</b><span>'+(f.files_count?f.files_count+' items':'')+'</span></div><span class="tag folder">FOLDER</span></div>';
       });
     }
     if(items.length){
@@ -295,13 +300,13 @@ function renderFolder(){
     h+='<div class="foot">RAJNISH PRIME · DIRECT</div>';
     view.innerHTML=h;
     if(pending&&pending.courseId===s.courseId){var pp=pending;pending=null;setTimeout(function(){act(pp.type,pp.courseId,pp.itemId,pp.title)},150);}
-  }).catch(function(){view.innerHTML='<div class="empty">Load failed.<br><button onclick="render()">RETRY</button></div>'});
+  }).catch(function(){view.innerHTML='<div class="empty">Load failed.<br><button data-act="back">◂ BACK</button> <button data-act="reload">RETRY</button></div>'});
 }
-function drill(folderId,title){var s=stack[stack.length-1];stack.push({t:'folder',title:title||('Folder '+folderId),courseId:s.courseId,folderId:folderId,autoDescend:true});render()}
+function drill(folderId,title){var s=stack[stack.length-1];stack.push({t:'folder',title:title||('Folder '+folderId),courseId:s.courseId,folderId:folderId,autoDescend:true});hPush();render()}
 function rowHtml(it,ic,cls,btn){
   var img=thumb(it.raw||it);
   var t=attrName(it.Title||it.title||'Untitled');
-  return '<div class="row" onclick="act(\''+cls+'\',\''+attrName(String(curCourse()))+'\',\''+attrName(String(it.id))+'\',\''+t+'\')">'
+  return '<div class="row" data-act="item" data-type="'+cls+'" data-course="'+attrName(String(curCourse()))+'" data-id="'+attrName(String(it.id))+'" data-title="'+t+'">'
     +(img?'<img class="rimg" loading="lazy" src="'+hHtml(img)+'" alt="">':'<div class="ric">'+ic+'</div>')
     +'<div class="rmain"><b>'+hHtml(it.Title||it.title||'Untitled')+'</b><span>'+(it.date_and_time||'')+'</span></div>'
     +'<span class="tag '+cls+'">'+btn+'</span></div>';
@@ -332,7 +337,7 @@ function authed(fn){
     });
   });
 }
-/* video player — encrypted video_id -> YouTube, links -> mp4/hls, player-token, notes-pdf */
+/* video player */
 function playVideo(courseId,vid,title,c){
   openModal(hHtml(title||'Video'),'<div class="spin"></div>');
   return api('/get/fetchVideoDetailsById',{course_id:courseId,video_id:vid,ytflag:'0',folder_wise_course:'1'},c).then(function(j){
@@ -374,11 +379,11 @@ function buildPlayer(title,r){
   else if(r.player){body='<iframe src="'+hHtml(r.player)+'" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>';mode='player'}
   if(!mode){setMbody('<div class="empty">No playable link found for this item.</div>');return}
   var extra='<div class="plist">';
-  if(r.pdfUrl)extra+='<button class="pbtn pdf" onclick="window.open(\''+hHtml(r.pdfUrl)+'\',\'_blank\')">📄 OPEN NOTES PDF</button>';
-  if(r.mp4)extra+='<button class="pbtn" onclick="window.open(\''+hHtml(r.mp4)+'\',\'_blank\')">⬇ OPEN DIRECT MP4</button>';
-  if(r.m3u8)extra+='<button class="pbtn" onclick="window.open(\''+hHtml(r.m3u8)+'\',\'_blank\')">⬇ OPEN DIRECT HLS</button>';
+  if(r.pdfUrl)extra+='<button class="pbtn pdf" data-act="ext" data-url="'+hHtml(r.pdfUrl)+'">📄 OPEN NOTES PDF</button>';
+  if(r.mp4)extra+='<button class="pbtn" data-act="ext" data-url="'+hHtml(r.mp4)+'">⬇ OPEN DIRECT MP4</button>';
+  if(r.m3u8)extra+='<button class="pbtn" data-act="ext" data-url="'+hHtml(r.m3u8)+'">⬇ OPEN DIRECT HLS</button>';
   extra+='</div>';
-  if(r.pdfKey)extra+='<div class="pwchip"><code id="pwk">'+hHtml(r.pdfKey)+'</code><button onclick="copyPw()">COPY PASSWORD</button></div>';
+  if(r.pdfKey)extra+='<div class="pwchip"><code id="pwk">'+hHtml(r.pdfKey)+'</code><button data-act="copypw">COPY PASSWORD</button></div>';
   extra+='<div class="hint">Tip: agar inline playback block ho to direct-open button use karein.</div>';
   setMbody(body+extra);
   if(mode==='hls'){
@@ -412,35 +417,30 @@ function openPdf(itemId,courseId,c,title,isImg){
     });
     chain.then(function(){
       if(!res.url){setMbody('<div class="empty">No document link found.</div>');return}
-      var h='<button class="pbtn pdf" onclick="window.open(\''+hHtml(res.url)+'\',\'_blank\')">📄 OPEN '+(isImg?'IMAGE':'PDF')+' IN NEW TAB</button>';
-      if(res.key)h+='<div class="pwchip"><code id="pwk">'+hHtml(res.key)+'</code><button onclick="copyPw()">COPY PASSWORD</button></div><div class="hint">Agar PDF password maange to upar wala use karein.</div>';
+      var h='<button class="pbtn pdf" data-act="ext" data-url="'+hHtml(res.url)+'">📄 OPEN '+(isImg?'IMAGE':'PDF')+' IN NEW TAB</button>';
+      if(res.key)h+='<div class="pwchip"><code id="pwk">'+hHtml(res.key)+'</code><button data-act="copypw">COPY PASSWORD</button></div><div class="hint">Agar PDF password maange to upar wala use karein.</div>';
       h+='<div class="hint">Rajnish Prime me download automatic khulta hai.</div>';
       setMbody(h);
     });
   }).catch(function(e){setMbody('<div class="empty">Load failed: '+hHtml(e.message||e)+'</div>');throw e});
 }
-/* external link items (batch-internal) — channel-policy: social links blocked */
+/* external link items — channel-policy: social links blocked */
 function openLink(itemId,courseId,c,title){
   openModal(hHtml(title||'Link'),'<div class="spin"></div>');
   return api('/get/fetchVideoDetailsById',{course_id:courseId,video_id:itemId,ytflag:'0',folder_wise_course:'1'},c).then(function(j){
     var d=(j&&j.data)||{};
-    var chain=dec(d.file_link||d.download_link||'').then(function(u){
+    return dec(d.file_link||d.download_link||'').then(function(u){
       if(!u){setMbody('<div class="empty">No link found.</div>');return}
-      if(policyBlock(u)){
-        setMbody('<div class="empty">🔗 External channel links are blocked by Rajnish Prime policy.</div>');
-        return;
-      }
+      if(policyBlock(u)){setMbody('<div class="empty">🔗 External channel links are blocked by Rajnish Prime policy.</div>');return}
       if(/youtu\.?be/i.test(u)){
-        var e=u.replace('watch?v=','embed/');
-        setMbody('<iframe src="'+hHtml(e)+'" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>');
+        setMbody('<iframe src="'+hHtml(u.replace('watch?v=','embed/'))+'" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>');
         return;
       }
-      setMbody('<button class="pbtn" onclick="window.open(\''+hHtml(u)+'\',\'_blank\')">🔗 OPEN LINK IN NEW TAB</button><div class="hint">'+hHtml(u)+'</div>');
+      setMbody('<button class="pbtn" data-act="ext" data-url="'+hHtml(u)+'">🔗 OPEN LINK IN NEW TAB</button><div class="hint">'+hHtml(u)+'</div>');
     });
-    return chain;
   }).catch(function(e){setMbody('<div class="empty">Load failed: '+hHtml(e.message||e)+'</div>');throw e});
 }
-/* quiz/test items — try to resolve any attached link */
+/* quiz/test items */
 function openQuiz(itemId,courseId,c,title){
   openModal(hHtml(title||'Quiz'),'<div class="spin"></div>');
   return api('/get/fetchVideoDetailsById',{course_id:courseId,video_id:itemId,ytflag:'0',folder_wise_course:'1'},c).then(function(j){
@@ -453,7 +453,7 @@ function openQuiz(itemId,courseId,c,title){
       })});
     });
     chain.then(function(){
-      if(out)setMbody('<button class="pbtn" onclick="window.open(\''+hHtml(out)+'\',\'_blank\')">📝 START QUIZ / TEST</button>');
+      if(out)setMbody('<button class="pbtn" data-act="ext" data-url="'+hHtml(out)+'">📝 START QUIZ / TEST</button>');
       else setMbody('<div class="empty">📝 No quiz link attached to this item yet.</div>');
     });
     return chain;
@@ -462,31 +462,59 @@ function openQuiz(itemId,courseId,c,title){
 function copyPw(){var el=document.getElementById('pwk');if(!el)return;try{navigator.clipboard.writeText(el.textContent).then(function(){toast('Password copied ✓')},function(){toast('Copy failed — select manually')})}catch(e){toast('Copy failed')}}
 /* ---------- login modal (fallback-only) ---------- */
 function loginModal(){
-  var h='<div class="mhead"><b>DISHA ACCOUNT LOGIN</b><button class="xbtn" onclick="closeModal()">✕</button></div><div class="mbody">'
+  var h='<div class="mhead"><b>DISHA ACCOUNT LOGIN</b><button class="xbtn" data-act="mclose">✕</button></div><div class="mbody">'
     +'<div class="err" id="lerr"></div>'
     +'<div class="hint" style="margin:0 0 12px">Master access refresh ho raha hai. Temporary: apna <b>Disha Online Classes</b> account (phone + password) se login karein — device par hi save hota hai.</div>'
     +'<div class="fld"><label>PHONE / EMAIL</label><input id="lem" type="text" placeholder="9999999999 or you@mail.com" autocomplete="username"></div>'
     +'<div class="fld"><label>PASSWORD</label><input id="lpw" type="password" placeholder="Account password" autocomplete="current-password"></div>'
-    +'<button class="lbtn" id="lgo">LOGIN & CONTINUE ▸</button>'
+    +'<button class="lbtn" data-act="login">LOGIN & CONTINUE ▸</button>'
     +'</div>';
+  hPush();
   modal.style.display='flex';mbox.innerHTML=h;
-  document.getElementById('lgo').onclick=function(){
-    var em=document.getElementById('lem').value,pw=document.getElementById('lpw').value,er=document.getElementById('lerr');
-    if(!em||!pw){er.style.display='block';er.textContent='Enter phone/email and password.';return}
-    er.style.display='none';document.getElementById('lgo').textContent='LOGGING IN...';
-    doLogin(em,pw).then(function(){
-      closeModal();toast('Login successful ✓');
-      if(pending){var pp=pending;pending=null;act(pp.type,pp.courseId,pp.itemId,pp.title)}
-    }).catch(function(e){er.style.display='block';er.textContent=e.message||'Login failed';document.getElementById('lgo').textContent='LOGIN & CONTINUE ▸'});
-  };
+}
+function doLoginSubmit(){
+  var em=document.getElementById('lem'),pw=document.getElementById('lpw'),er=document.getElementById('lerr'),go=document.querySelector('[data-act="login"]');
+  if(!em||!pw||!go)return;
+  if(!em.value||!pw.value){er.style.display='block';er.textContent='Enter phone/email and password.';return}
+  er.style.display='none';go.textContent='LOGGING IN...';
+  doLogin(em.value,pw.value).then(function(){
+    closeModal();toast('Login successful ✓');
+    if(pending){var pp=pending;pending=null;act(pp.type,pp.courseId,pp.itemId,pp.title)}
+  }).catch(function(e){er.style.display='block';er.textContent=e.message||'Login failed';go.textContent='LOGIN & CONTINUE ▸'});
 }
 function openModal(t,bodyHtml){
+  hPush();
   modal.style.display='flex';
-  mbox.innerHTML='<div class="mhead"><b>'+t+'</b><button class="xbtn" onclick="closeModal()">✕</button></div><div class="mbody">'+bodyHtml+'</div>';
+  mbox.innerHTML='<div class="mhead"><b>'+t+'</b><button class="xbtn" data-act="mclose">✕</button></div><div class="mbody">'+bodyHtml+'</div>';
 }
 function setMbody(h){var b=mbox.querySelector('.mbody');if(b)b.innerHTML=h}
 function closeModal(){modal.style.display='none'}
-modal.addEventListener('click',function(e){if(e.target===modal)closeModal()});
+/* ---------- DELEGATED EVENTS (zero inline handlers) ---------- */
+document.addEventListener('click',function(e){
+  var el=e.target&&e.target.closest?e.target.closest('[data-act]'):null;
+  if(el){
+    var a=el.getAttribute('data-act');
+    if(a==='open')openBatch(el.getAttribute('data-id'),el.getAttribute('data-nm'));
+    else if(a==='drill')drill(el.getAttribute('data-id'),el.getAttribute('data-nm'));
+    else if(a==='item')act(el.getAttribute('data-type'),el.getAttribute('data-course'),el.getAttribute('data-id'),el.getAttribute('data-title'));
+    else if(a==='wish')togWish(el.getAttribute('data-id'),el.getAttribute('data-nm'));
+    else if(a==='back')goBack();
+    else if(a==='saved')togSaved();
+    else if(a==='reload')loadBatches();
+    else if(a==='mclose')closeModal();
+    else if(a==='copypw')copyPw();
+    else if(a==='login')doLoginSubmit();
+    else if(a==='ext')window.open(el.getAttribute('data-url'),'_blank');
+    return;
+  }
+  if(e.target===modal)closeModal();
+});
+document.addEventListener('input',function(e){
+  if(e.target&&e.target.id==='sq')onSearch(e.target.value);
+});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&e.target&&e.target.id==='lpw')doLoginSubmit();
+});
 /* ---------- boot ---------- */
 ensureAuth().then(function(c){
   if(c&&c.master){toast('Master access active ✓');document.getElementById('hsub').textContent='Rajnish Prime · master access · auto-sync'}
