@@ -89,14 +89,14 @@ iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:12px;background:#000}
 <body>
 <header>
   <div class="logo">RP</div>
-  <div class="htxt"><b>DISHA ALL BATCHES</b><span id="hsub">Rajnish Prime · direct access · no gate</span></div>
+  <div class="htxt"><b>DISHA ALL BATCHES</b><span id="hsub">Rajnish Prime · direct · timeout-protected</span></div>
 </header>
 <main id="view"></main>
 <div id="modal"><div class="mbox" id="mbox"></div></div>
 <div id="toast"></div>
 <script>
 /* =====================================================================
-   RAJNISH PRIME — DISHA ALL BATCHES  v5 "DELEGATION EDITION"
+   RAJNISH PRIME — DISHA ALL BATCHES  v6 "NEVER-BLANK EDITION" (9s-timeouts + cache-first + persist-folders)
    v1 public catalog + own-login
    v2 master-token auto-boot + real Appx video/pdf flow
    v3 root parent_id=-1 fix + name-titles
@@ -125,7 +125,11 @@ function thumb(o){if(!o)return '';var ks=['previewImage','thumbnail','course_thu
 function api(path,params,auth){
   var q=[],p=params||{};for(var k in p)q.push(encodeURIComponent(k)+'='+encodeURIComponent(p[k]));
   var hd=Object.assign({},H);if(auth){hd['Authorization']=auth.token;hd['User-ID']=auth.userId;}
-  return fetch(API+path+'?'+q.join('&'),{headers:hd}).then(function(r){return r.json()});
+  var ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
+  var tid=ctrl?setTimeout(function(){try{ctrl.abort()}catch(e){}},9000):null;
+  return fetch(API+path+'?'+q.join('&'),{headers:hd,signal:ctrl?ctrl.signal:undefined}).then(function(r){
+    if(tid)clearTimeout(tid);return r.json();
+  }).catch(function(e){if(tid)clearTimeout(tid);throw e});
 }
 /* ---------- AES-CBC (Appx: b64-CIPHER : b64-IV) ---------- */
 var aesKey=null;
@@ -198,19 +202,29 @@ function onSearch(v){SEARCH=v;clearTimeout(debT);debT=setTimeout(function(){SEAR
 function togSaved(){ONLY_SAVED=!ONLY_SAVED;render()}
 /* ---------- data ---------- */
 var batchesCache=null,myBatchCache=null;
-function loadBatches(){
-  setLoading();
+var BCACHE='rp_disha_bcache_v1';
+function bcacheRead(){try{var s=localStorage.getItem(BCACHE);if(s){var j=JSON.parse(s);if(j&&j.ts&&Date.now()-j.ts<24*3600*1000&&Array.isArray(j.data)&&j.data.length)return j.data}}catch(e){}return null}
+function bcacheWrite(rows){try{localStorage.setItem(BCACHE,JSON.stringify({ts:Date.now(),data:rows}))}catch(e){}}
+function loadBatches(){ /* cache-first: instant-render even offline, then silent-fresh-refresh */
+  var c0=bcacheRead();
+  if(c0){batchesCache=c0;render();refreshBatches(false)}
+  else{setLoading();refreshBatches(true)}
+}
+function refreshBatches(showLoading){
+  if(showLoading&&batchesCache==null)setLoading();
   var c=getCred();
   var pub=api('/get/courselistnewv2',{exam_name:'',start:'-1',userid:'0'}).then(function(j){
     var rows=(j&&j.data)||[];
     batchesCache=rows.filter(function(r){return String(r.type||'COURSE').toUpperCase()==='COURSE'&&r.id});
+    bcacheWrite(batchesCache);
   });
   var mine=c?api('/get/mycourse',{userid:c.userId,start:'0',folder_wise_course:'1'},c).then(function(j){
     var rows=(j&&j.data)||[];
     myBatchCache=Array.isArray(rows)?rows:[];
   }).catch(function(){myBatchCache=null}):Promise.resolve();
-  Promise.all([pub,mine]).then(render).catch(function(){
-    view.innerHTML='<div class="empty">Could not load batches.<br><button data-act="reload">RETRY</button></div>';
+  Promise.all([pub,mine]).then(render).catch(function(e){
+    if(batchesCache){toast('Network slow — cached list dikh rahi hai');render();return}
+    view.innerHTML='<div class="empty">DISHA server slow/timeout (9s).<br>Data ya signal check karke retry karein.<br><button data-act="reload">⟳ RETRY</button></div>';
   });
 }
 function render(){
@@ -257,6 +271,9 @@ function renderFolder(){
   setLoading();
   var cacheKey='fc_'+s.courseId+'_'+s.folderId;
   var cached=LS[cacheKey];
+  if(!cached){ /* localStorage-persist (24h) — slow-network par instant+offline */
+    try{var sraw=localStorage.getItem('rp_'+cacheKey);if(sraw){var sj=JSON.parse(sraw);if(sj&&sj.ts&&Date.now()-sj.ts<24*3600*1000&&Array.isArray(sj.rows)){cached=sj.rows;LS[cacheKey]=cached}}}catch(e){}
+  }
   var p;
   if(cached){p=Promise.resolve(cached)}
   else{
@@ -268,7 +285,13 @@ function renderFolder(){
           return r2.length?r2:rows;
         });
       }
-      LS[cacheKey]=rows;return rows;
+      LS[cacheKey]=rows;
+      try{localStorage.setItem('rp_'+cacheKey,JSON.stringify({ts:Date.now(),rows:rows}))}catch(e){}
+      return rows;
+    }).catch(function(e){
+      if(cached)return cached;
+      view.innerHTML='<div class="empty">Folder load timeout (9s).<br><button data-act="back">◂ BACK</button> <button data-act="reload">⟳ RETRY</button></div>';
+      throw e;
     });
   }
   p.then(function(rows){
@@ -500,7 +523,7 @@ document.addEventListener('click',function(e){
     else if(a==='wish')togWish(el.getAttribute('data-id'),el.getAttribute('data-nm'));
     else if(a==='back')goBack();
     else if(a==='saved')togSaved();
-    else if(a==='reload')loadBatches();
+    else if(a==='reload'){try{localStorage.removeItem(BCACHE)}catch(e){}batchesCache=null;loadBatches()}
     else if(a==='mclose')closeModal();
     else if(a==='copypw')copyPw();
     else if(a==='login')doLoginSubmit();
