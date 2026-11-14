@@ -195,7 +195,8 @@ function renderHome(){
   list.forEach(function(b){
     var nm=String(b.course_name||b.name||'Batch'),pr=Number(b.price),img=thumb(b);
     var free=(!b.price&&b.price!==0)||!isFinite(pr)||pr<=0;
-    h+='<div class="bcard" onclick="openBatch(\''+hHtml(String(b.id))+'\')">'
+    var onm=nm.replace(/'/g,'');
+    h+='<div class="bcard" onclick="openBatch(\''+hHtml(String(b.id))+',\''+hHtml(onm)+'\')">'
       +(img?'<img class="bimg" loading="lazy" src="'+hHtml(img)+'" onerror="this.style.display=\'none\'">':'<div class="bimg"></div>')
       +'<div class="bbody"><div class="bname">'+hHtml(nm)+'</div><div class="bmeta">'
       +'<span class="price'+(free?' free':'')+'">'+(free?'FREE':'₹'+pr)+'</span>'
@@ -204,26 +205,39 @@ function renderHome(){
   h+='</div><div class="foot">RAJNISH PRIME · DISHA CATALOG · DIRECT</div>';
   view.innerHTML=h;
 }
-function openBatch(id){stack.push({t:'folder',title:'Batch',courseId:id,folderId:id,autoDescend:true});render()}
+function openBatch(id,nm){stack.push({t:'folder',title:nm||'Batch',courseId:id,folderId:'-1',root:true,autoDescend:true});render()}
 function renderFolder(){
   var s=stack[stack.length-1];
   setLoading();
   var cacheKey='fc_'+s.courseId+'_'+s.folderId;
   var cached=LS[cacheKey];
-  var p=cached?Promise.resolve(cached):api('/get/folder_contentsv2',{course_id:s.courseId,parent_id:s.folderId}).then(function(j){
-    var rows=(j&&j.data)||[];LS[cacheKey]=rows;return rows;
-  });
+  var p;
+  if(cached){p=Promise.resolve(cached)}
+  else{
+    p=api('/get/folder_contentsv2',{course_id:s.courseId,parent_id:s.folderId}).then(function(j){
+      var rows=(j&&j.data)||[];
+      /* fallback: root (-1) khali aaye to course-id-as-parent try (kuch-purane-batches) */
+      if(!rows.length&&s.root&&s.folderId==='-1'){
+        return api('/get/folder_contentsv2',{course_id:s.courseId,parent_id:s.courseId}).then(function(j2){
+          var r2=(j2&&j2.data)||[];
+          return r2.length?r2:rows;
+        });
+      }
+      LS[cacheKey]=rows;return rows;
+    });
+  }
   p.then(function(rows){
     if(stack[stack.length-1]!==s)return;
     var folds=rows.filter(function(r){return String(r.material_type||'').toUpperCase()==='FOLDER'});
     var items=rows.filter(function(r){return String(r.material_type||'').toUpperCase()!=='FOLDER'});
-    if(s.autoDescend&&folds.length===1&&items.length<=1){s.folderId=folds[0].id;s.autoDescend=false;render();return}
+    if(s.autoDescend&&folds.length===1&&items.length<=1){s.folderId=folds[0].id;s.autoDescend=false;LS['fc_'+s.courseId+'_'+s.folderId]=rows;render();return}
     var h='<div class="crumb"><button onclick="goBack()">◂ BACK</button><button class="here">'+hHtml(s.title)+'</button></div>';
     if(!rows.length){h+='<div class="empty">Nothing here yet.</div>';view.innerHTML=h;return}
     if(folds.length){
       h+='<div class="sec-t">Folders ('+folds.length+')</div>';
       folds.forEach(function(f){
-        h+='<div class="row" onclick="drill(\''+hHtml(String(f.id))+'\')"><div class="ric">📁</div><div class="rmain"><b>'+hHtml(f.Title||f.title||'Folder')+'</b><span>'+(f.files_count?f.files_count+' items':'')+'</span></div><span class="tag folder">FOLDER</span></div>';
+        var fn=String(f.Title||f.title||'Folder').replace(/'/g,'');
+        h+='<div class="row" onclick="drill(\''+hHtml(String(f.id))+',\''+hHtml(fn)+'\')"><div class="ric">📁</div><div class="rmain"><b>'+hHtml(fn)+'</b><span>'+(f.files_count?f.files_count+' items':'')+'</span></div><span class="tag folder">FOLDER</span></div>';
       });
     }
     if(items.length){
@@ -241,7 +255,7 @@ function renderFolder(){
     if(pending&&pending.courseId===s.courseId){var pp=pending;pending=null;setTimeout(function(){act(pp.type,pp.courseId,pp.itemId,pp.title)},150);}
   }).catch(function(){view.innerHTML='<div class="empty">Load failed.<br><button onclick="render()">RETRY</button></div>'});
 }
-function drill(folderId){var s=stack[stack.length-1];stack.push({t:'folder',title:'Folder '+folderId,courseId:s.courseId,folderId:folderId});render()}
+function drill(folderId,title){var s=stack[stack.length-1];stack.push({t:'folder',title:title||('Folder '+folderId),courseId:s.courseId,folderId:folderId,autoDescend:true});render()}
 function rowHtml(it,ic,cls,btn){
   var img=thumb(it.raw||it);
   return '<div class="row" onclick="act(\''+cls+'\',\''+hHtml(String(curCourse()))+'\',\''+hHtml(String(it.id))+'\',\''+hHtml(String(it.Title||it.title||'')).replace(/'/g,'')+'\')">'
