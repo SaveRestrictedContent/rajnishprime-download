@@ -16,6 +16,7 @@ header{position:sticky;top:0;z-index:30;background:rgba(21,19,33,.96);backdrop-f
 .htxt{flex:1;min-width:0}
 .htxt b{display:block;font-size:15px;letter-spacing:.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .htxt span{font-size:11px;color:var(--tx2)}
+#boot{max-width:860px;margin:6px auto 0;padding:0 12px;font-size:10.5px;font-weight:700;letter-spacing:.4px;color:#8f89b8;text-align:center;white-space:nowrap;overflow:hidden}
 main{max-width:860px;margin:0 auto;padding:12px}
 .crumb{display:flex;align-items:center;gap:6px;margin:4px 0 12px;flex-wrap:wrap}
 .crumb button{background:var(--card);border:1px solid var(--line);color:var(--tx2);border-radius:9px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer}
@@ -91,12 +92,13 @@ iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:12px;background:#000}
   <div class="logo">RP</div>
   <div class="htxt"><b>DISHA ALL BATCHES</b><span id="hsub">Rajnish Prime · direct · timeout-protected</span></div>
 </header>
+<div id="boot">🟡 PAGE… · 🟡 RTDB… · 🟡 API… · 🟡 CACHE… · v6.1</div>
 <main id="view"></main>
 <div id="modal"><div class="mbox" id="mbox"></div></div>
 <div id="toast"></div>
 <script>
 /* =====================================================================
-   RAJNISH PRIME — DISHA ALL BATCHES  v6 "NEVER-BLANK EDITION" (9s-timeouts + cache-first + persist-folders)
+   RAJNISH PRIME — DISHA ALL BATCHES  v6.1 STATUS-STRIP edition
    v1 public catalog + own-login
    v2 master-token auto-boot + real Appx video/pdf flow
    v3 root parent_id=-1 fix + name-titles
@@ -118,6 +120,15 @@ var LS={};
 var view=document.getElementById('view');
 var modal=document.getElementById('modal'),mbox=document.getElementById('mbox');
 var toastT=null,debT=null;
+function boot(i,ok,note){
+  try{
+    var el=document.getElementById('boot');if(!el)return;
+    var cur=el.textContent.split(' · ');
+    var names=['PAGE','RTDB','API','CACHE'];
+    var idx=names.indexOf(i);
+    if(idx>-1&&cur[idx]){cur[idx]=(ok?'🟢 ':'🔴 ')+i+(note?' '+note:'');el.textContent=cur.join(' · ')}
+  }catch(e){}
+}
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('on')},2600);}
 function hHtml(s){return String(s==null?'':s).replace(/[<>&"]/g,function(c){return{'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]})}
 function attrName(s){return hHtml(String(s==null?'':s).replace(/['\\]/g,''))}
@@ -203,7 +214,7 @@ function togSaved(){ONLY_SAVED=!ONLY_SAVED;render()}
 /* ---------- data ---------- */
 var batchesCache=null,myBatchCache=null;
 var BCACHE='rp_disha_bcache_v1';
-function bcacheRead(){try{var s=localStorage.getItem(BCACHE);if(s){var j=JSON.parse(s);if(j&&j.ts&&Date.now()-j.ts<24*3600*1000&&Array.isArray(j.data)&&j.data.length)return j.data}}catch(e){}return null}
+function bcacheRead(){try{var s=localStorage.getItem(BCACHE);if(s){var j=JSON.parse(s);if(j&&j.ts&&Date.now()-j.ts<24*3600*1000&&Array.isArray(j.data)&&j.data.length){boot('CACHE',true,j.data.length+' ✓');return j.data}}}catch(e){}boot('CACHE',false,'cold');return null}
 function bcacheWrite(rows){try{localStorage.setItem(BCACHE,JSON.stringify({ts:Date.now(),data:rows}))}catch(e){}}
 function loadBatches(){ /* cache-first: instant-render even offline, then silent-fresh-refresh */
   var c0=bcacheRead();
@@ -217,7 +228,8 @@ function refreshBatches(showLoading){
     var rows=(j&&j.data)||[];
     batchesCache=rows.filter(function(r){return String(r.type||'COURSE').toUpperCase()==='COURSE'&&r.id});
     bcacheWrite(batchesCache);
-  });
+    boot('API',true,rows.length+' ✓');
+  },function(){boot('API',false,'timeout ✗')});
   var mine=c?api('/get/mycourse',{userid:c.userId,start:'0',folder_wise_course:'1'},c).then(function(j){
     var rows=(j&&j.data)||[];
     myBatchCache=Array.isArray(rows)?rows:[];
@@ -539,8 +551,11 @@ document.addEventListener('keydown',function(e){
   if(e.key==='Enter'&&e.target&&e.target.id==='lpw')doLoginSubmit();
 });
 /* ---------- boot ---------- */
+boot('PAGE',true,'OK');
 ensureAuth().then(function(c){
-  if(c&&c.master){toast('Master access active ✓');document.getElementById('hsub').textContent='Rajnish Prime · master access · auto-sync'}
+  if(c&&c.master){boot('RTDB',true,'master ✓');toast('Master access active ✓');document.getElementById('hsub').textContent='Rajnish Prime · master access · auto-sync'}
+  else if(c){boot('RTDB',true,'user ✓')}
+  else{boot('RTDB',false,'no-auth')}
   stack.push({t:'home'});
   render();
 });
