@@ -6,7 +6,7 @@
 <title>DISHA ALL BATCHES — Rajnish Prime</title>
 <meta name="description" content="All Disha Online Classes batches — direct access. Rajnish Prime.">
 <style>
-/* ============ RAJNISH PRIME premium-dark theme ============ */
+/* ============ RAJNISH PRIME premium-dark theme (v2 master-auth) ============ */
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{--bg:#151321;--card:#201d2e;--card2:#262238;--line:#37324e;--tx:#f2f0ff;--tx2:#9d97bd;--pu:#635CFF;--pu2:#8B85FF;--rd:#E5395F;--gr:#3EB05A;--am:#FFB020}
 html,body{background:var(--bg);color:var(--tx);font-family:-apple-system,'Segoe UI',Roboto,'Noto Sans',sans-serif;font-size:15px}
@@ -92,46 +92,47 @@ iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:12px;background:#000}
 <div id="toast"></div>
 <script>
 /* =====================================================================
-   RAJNISH PRIME — DISHA ALL BATCHES (BAT-universe style catalog, own build)
-   - catalog + folder tree: PUBLIC Appx APIs (no login)
-   - video/pdf links: one-time DISHA account login (user's own account,
-     stored on-device only) -> AES-CBC decrypt (Appx platform key)
-   - no arolinks, no gates, direct.
+   RAJNISH PRIME — DISHA ALL BATCHES v2 (MASTER-AUTH EDITION)
+   v1: public catalog + tree + own-login (BAT-style)
+   v2: + disha_master_token auto-boot (Firebase RTDB, public-read)
+       -> videos/PDFs open DIRECT for every user, no login screen.
+       + real Appx video-flow: encrypted video_id -> YouTube embed,
+         pdf_link + pdf_encryption_key -> PDF + password chip.
+       Master-token rotates from RTDB automatically (boss-side control).
    ===================================================================== */
 'use strict';
 var API='https://dishaonlineclassesapi.classx.co.in';
+var MTURL='https://rajnish-prime-faa2b-default-rtdb.europe-west1.firebasedatabase.app/disha_master_token.json';
 var H={'Auth-Key':'appxapi','Client-Service':'Appx','source':'website','Device-Type':'android'};
 var CRED='rp_disha_cred_v1';
-var LS={};/* in-memory page cache */
+var LS={};
 var view=document.getElementById('view');
 var modal=document.getElementById('modal'),mbox=document.getElementById('mbox');
 var toastT=null;
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('on')},2600);}
 function hHtml(s){return String(s==null?'':s).replace(/[<>&"]/g,function(c){return{'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]})}
-/* ---------- thumbnail helper (same field priority as appx clients) ---------- */
 function thumb(o){if(!o)return '';var ks=['previewImage','thumbnail','course_thumbnail','image','poster','batch_image','course_image'];for(var i=0;i<ks.length;i++){var v=String(o[ks[i]]==null?'':o[ks[i]]).trim();if(/^https?:\/\//i.test(v))return v;if(v.indexOf('//')===0)return 'https:'+v}return ''}
-/* ---------- api fetch wrapper ---------- */
 function api(path,params,auth){
   var q=[],p=params||{};for(var k in p)q.push(encodeURIComponent(k)+'='+encodeURIComponent(p[k]));
   var hd=Object.assign({},H);if(auth){hd['Authorization']=auth.token;hd['User-ID']=auth.userId;}
   return fetch(API+path+'?'+q.join('&'),{headers:hd}).then(function(r){return r.json()});
 }
-/* ---------- AES-CBC decrypt (Appx platform scheme: b64 iv-first16 : data) ---------- */
+/* ---------- AES-CBC (Appx scheme: b64 CIPHER : b64-IV) ---------- */
 var aesKey=null;
 function aesK(){if(aesKey)return aesKey;var raw=new TextEncoder().encode('638udh3829162018');aesKey=crypto.subtle.importKey('raw',raw,'AES-CBC',false,['decrypt']);return aesKey;}
 function b2a(b){return Uint8Array.from(atob(b),function(c){return c.charCodeAt(0)})}
-function dec(enc){ /* returns Promise<string> */
+function dec(enc){
   if(!enc)return Promise.resolve('');
   enc=String(enc).trim();if(/^https?:\/\//i.test(enc))return Promise.resolve(enc);
   var parts=enc.split(':');if(parts.length!==2||!parts[0]||!parts[1])return Promise.resolve('');
   try{
-    return aesK().then(function(k){return crypto.subtle.decrypt({name:'AES-CBC',iv:b2a(parts[0])},k,b2a(parts[1]))})
+    return aesK().then(function(k){return crypto.subtle.decrypt({name:'AES-CBC',iv:b2a(parts[1])},k,b2a(parts[0]))})
       .then(function(pt){return new TextDecoder().decode(pt).trim()})
       .catch(function(){return ''});
   }catch(e){return Promise.resolve('')}
 }
 function isRealPdf(u){try{var t=new URL(u);return t.protocol==='https:'&&!/^pdflink\.com$/i.test(t.hostname)&&t.pathname.length>1}catch(e){return false}}
-/* ---------- credential store (device-local only) ---------- */
+/* ---------- credential store ---------- */
 function getCred(){try{var s=localStorage.getItem(CRED);return s?JSON.parse(s):null}catch(e){return null}}
 function setCred(c){try{localStorage.setItem(CRED,JSON.stringify(c))}catch(e){}}
 function clearCred(){try{localStorage.removeItem(CRED)}catch(e){}}
@@ -147,15 +148,28 @@ function doLogin(email,pass){
       setCred(c);return c;
     });
 }
-/* ---------- view helpers ---------- */
+/* ---------- MASTER-TOKEN boot (RTDB public-read) ---------- */
+function fetchMaster(){
+  return fetch(MTURL,{cache:'no-store'}).then(function(r){return r.json()}).then(function(m){
+    if(m&&m.token&&m.userId)return{token:String(m.token),userId:String(m.userId),name:String(m.name||'RP-DISHA-MASTER'),master:true,ts:Number(m.ts||0)};
+    return null;
+  }).catch(function(){return null});
+}
+var bootDone=false;
+function ensureAuth(){
+  var c=getCred();
+  if(c&&c.token&&c.userId)return Promise.resolve(c);
+  return fetchMaster().then(function(m){
+    if(m){setCred(m);return m}
+    return null;
+  });
+}
+/* ---------- views ---------- */
 function setLoading(){view.innerHTML='<div class="spin"></div>'}
 function goBack(){if(stack.length>1){stack.pop();render()}}
-/* navigation stack: [{t:'home'|'folder', title, courseId, folderId}] */
 var stack=[];
-function push(s){stack.push(s);render()}
 var SEARCH='';
 function setSearch(v){SEARCH=v.trim().toLowerCase();render()}
-/* ---------- HOME: batches catalog (public) ---------- */
 var batchesCache=null;
 function loadBatches(){
   setLoading();
@@ -167,7 +181,7 @@ function loadBatches(){
 }
 function render(){
   var s=stack[stack.length-1];
-  if(!s){return}
+  if(!s)return;
   if(s.t==='home')return renderHome();
   if(s.t==='folder')return renderFolder();
 }
@@ -175,7 +189,7 @@ function renderHome(){
   if(!batchesCache){loadBatches();return}
   var list=batchesCache;
   if(SEARCH)list=list.filter(function(b){return String(b.course_name||b.name||'').toLowerCase().indexOf(SEARCH)>-1});
-  var h='<div class="search"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg><input type="search" placeholder="SEARCH BATCH..." value="'+hHtml(SEARCH===''?'':SEARCH)+'" oninput="setSearch(this.value)"></div>';
+  var h='<div class="search"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg><input type="search" placeholder="SEARCH BATCH..." value="'+hHtml(SEARCH)+'" oninput="setSearch(this.value)"></div>';
   if(!list.length){h+='<div class="empty">No batch matched.</div>';view.innerHTML=h;return}
   h+='<div class="grid">';
   list.forEach(function(b){
@@ -190,11 +204,7 @@ function renderHome(){
   h+='</div><div class="foot">RAJNISH PRIME · DISHA CATALOG · DIRECT</div>';
   view.innerHTML=h;
 }
-function openBatch(id){
-  stack.push({t:'folder',title:'Batch',courseId:id,folderId:id,autoDescend:true});
-  render();
-}
-/* ---------- FOLDER BROWSER (public folder_contentsv2) ---------- */
+function openBatch(id){stack.push({t:'folder',title:'Batch',courseId:id,folderId:id,autoDescend:true});render()}
 function renderFolder(){
   var s=stack[stack.length-1];
   setLoading();
@@ -205,12 +215,9 @@ function renderFolder(){
   });
   p.then(function(rows){
     if(stack[stack.length-1]!==s)return;
-    /* auto-descend single wrap-folder (appx pattern) */
     var folds=rows.filter(function(r){return String(r.material_type||'').toUpperCase()==='FOLDER'});
     var items=rows.filter(function(r){return String(r.material_type||'').toUpperCase()!=='FOLDER'});
-    if(s.autoDescend&&folds.length===1&&items.length<=1){
-      s.folderId=folds[0].id;s.autoDescend=false;render();return;
-    }
+    if(s.autoDescend&&folds.length===1&&items.length<=1){s.folderId=folds[0].id;s.autoDescend=false;render();return}
     var h='<div class="crumb"><button onclick="goBack()">◂ BACK</button><button class="here">'+hHtml(s.title)+'</button></div>';
     if(!rows.length){h+='<div class="empty">Nothing here yet.</div>';view.innerHTML=h;return}
     if(folds.length){
@@ -231,15 +238,10 @@ function renderFolder(){
     }
     h+='<div class="foot">RAJNISH PRIME · DIRECT</div>';
     view.innerHTML=h;
-    /* auto-resume pending action (after login) */
     if(pending&&pending.courseId===s.courseId){var pp=pending;pending=null;setTimeout(function(){act(pp.type,pp.courseId,pp.itemId,pp.title)},150);}
   }).catch(function(){view.innerHTML='<div class="empty">Load failed.<br><button onclick="render()">RETRY</button></div>'});
 }
-function drill(folderId){
-  var s=stack[stack.length-1];
-  stack.push({t:'folder',title:'Folder '+folderId,courseId:s.courseId,folderId:folderId});
-  render();
-}
+function drill(folderId){var s=stack[stack.length-1];stack.push({t:'folder',title:'Folder '+folderId,courseId:s.courseId,folderId:folderId});render()}
 function rowHtml(it,ic,cls,btn){
   var img=thumb(it.raw||it);
   return '<div class="row" onclick="act(\''+cls+'\',\''+hHtml(String(curCourse()))+'\',\''+hHtml(String(it.id))+'\',\''+hHtml(String(it.Title||it.title||'')).replace(/'/g,'')+'\')">'
@@ -248,69 +250,84 @@ function rowHtml(it,ic,cls,btn){
     +'<span class="tag '+cls+'">'+btn+'</span></div>';
 }
 function curCourse(){var s=stack[stack.length-1];return s&&s.courseId||''}
-/* ---------- ACTIONS ---------- */
+/* ---------- ACTIONS (master-auth + retry-on-expiry) ---------- */
 var pending=null;
 function act(type,courseId,itemId,title){
   if(type==='folder')return;
-  var c=getCred();
-  if(!c){pending={type:type,courseId:courseId,itemId:itemId,title:title};return loginModal()}
-  if(type==='img'){openPdf(itemId,courseId,c,title,true);return}
-  var vmod=LS['vd_'+courseId+'_'+itemId];
-  if(type==='video')return playVideo(courseId,itemId,title,c);
-  if(type==='pdf')return openPdf(itemId,courseId,c,title,false);
+  if(type==='img'){authed(function(c){return openPdf(itemId,courseId,c,title,true)});return}
+  if(type==='video'){authed(function(c){return playVideo(courseId,itemId,title,c)});return}
+  if(type==='pdf'){authed(function(c){return openPdf(itemId,courseId,c,title,false)});return}
 }
-/* video player */
+function authed(fn){
+  ensureAuth().then(function(c){
+    if(!c){pending=null;return loginModal()}
+    fn(c).catch(function(e){
+      var m=String(e&&e.message||e);
+      if(/auth|token|401/i.test(m)){
+        clearCred();
+        fetchMaster().then(function(mm){
+          if(mm){setCred(mm);fn(mm).catch(function(){pending=null;loginModal()})}
+          else{pending=null;loginModal()}
+        });
+      }else{toast('Load failed — try again')}
+    });
+  });
+}
+/* video player — real Appx flow: encrypted video_id -> YouTube, links -> mp4/hls, player-token fallback */
 function playVideo(courseId,vid,title,c){
   openModal(hHtml(title||'Video'),'<div class="spin"></div>');
-  api('/get/fetchVideoDetailsById',{course_id:courseId,video_id:vid,ytflag:'0',folder_wise_course:'1'},c).then(function(j){
+  return api('/get/fetchVideoDetailsById',{course_id:courseId,video_id:vid,ytflag:'0',folder_wise_course:'1'},c).then(function(j){
     var msg=String((j&&(j.msg||j.message))||'');
-    if(/invalid token|token expired|too many devices/i.test(msg)){clearCred();closeModal();toast('Session expired — login again');pending={type:'video',courseId:courseId,itemId:vid,title:title};return loginModal()}
-    var d=(j&&j.data)||{},urls=[],yout='';
+    if(/invalid token|token expired|too many devices/i.test(msg))throw new Error('auth-expired');
+    var d=(j&&j.data)||{},res={mp4:'',m3u8:'',yt:'',player:'',pdfUrl:'',pdfKey:''};
+    /* 1) encrypted video_id (ytFlag) -> YouTube */
+    var vidEnc=String(d.video_id||''),ytf=String(d.ytFlagWeb||d.ytFlag||'0');
+    var chain=dec(vidEnc).then(function(y){
+      if(y&&/^[A-Za-z0-9_-]{11}$/.test(y))res.yt='https://www.youtube.com/embed/'+y;
+      else if(y&&/^https?:\/\//i.test(y)&&/youtu\.?be/i.test(y))res.yt=y.replace('watch?v=','embed/');
+    });
+    /* 2) encrypted_links + download/file links */
     var links=(Array.isArray(d.encrypted_links)?d.encrypted_links:[]).map(function(x){return x&&x.path||''}).concat([d.download_link||'',d.file_link||'']);
-    var done=0,dl=links.length&&links.length||0;
-    var res={mp4:'',m3u8:'',yt:'',player:''};
-    var chain=Promise.resolve();
     links.forEach(function(l){
       chain=chain.then(function(){return dec(l).then(function(u){
         if(!/^https?:\/\//i.test(u))return;
-        if(/\/hls-drm-/i.test(u))return; /* DRM-protected: skip */
+        if(/\/hls-drm-/i.test(u))return;
         if(/\.m3u8/i.test(u)&&!res.m3u8)res.m3u8=u;
         else if(/\.mp4/i.test(u)&&!res.mp4)res.mp4=u;
         else if(!res.mp4&&!res.m3u8&&!res.yt)res.yt=u;
       })});
     });
+    /* 3) lecture-PDF (notes) in same response */
+    chain=chain.then(function(){return dec(d.pdf_link||'').then(function(u){
+      if(u&&isRealPdf(u)){res.pdfUrl=u;
+        if(String(d.is_pdf_encrypted||'0')!=='0'&&d.pdf_encryption_key){return dec(d.pdf_encryption_key).then(function(k){res.pdfKey=k||String(d.pdf_encryption_key)})}
+      }
+    })});
+    /* 4) appx player-token fallback */
     chain.then(function(){
-      /* youtube-id fallback */
-      if(!res.mp4&&!res.m3u8&&!res.yt){
-        var f=String(d.file_link||'');
-        if(/^[A-Za-z0-9_-]{11}$/.test(f))res.yt='https://www.youtube.com/embed/'+f;
-      }
-      /* appx player token fallback */
       var tk=String(d.video_player_token||''),pu=String(d.video_player_url||'');
-      if(tk&&tk!=='1234'){
-        res.player=/token=$/.test(pu)?pu+encodeURIComponent(tk):'https://appx-play.classx.co.in/combined-img-player?isMobile=true&token='+encodeURIComponent(tk);
-      }
+      if(tk&&tk!=='1234'){res.player=/token=$/.test(pu)?pu+encodeURIComponent(tk):'https://appx-play.classx.co.in/combined-img-player?isMobile=true&token='+encodeURIComponent(tk)}
       buildPlayer(title,res);
     });
-  }).catch(function(e){setMbody('<div class="empty">Playback load failed: '+hHtml(e.message||e)+'<br><button onclick="render()">RETRY</button></div>')});
+  }).catch(function(e){setMbody('<div class="empty">Playback load failed: '+hHtml(e.message||e)+'</div>');throw e});
 }
 function buildPlayer(title,r){
-  var body='';
-  var done=false;
-  if(r.yt&&/youtube|youtu\.be/i.test(r.yt)){body='<iframe src="'+hHtml(r.yt)+'" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>';done=true;}
-  else if(r.mp4){body='<video class="vid" src="'+hHtml(r.mp4)+'" controls autoplay playsinline></video>';done=true;}
-  else if(r.m3u8){body='<video class="vid" id="hv" controls autoplay playsinline></video>';done='hls';}
-  else if(r.player){body='<iframe src="'+hHtml(r.player)+'" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>';done=true;}
-  if(!done){setMbody('<div class="empty">No playable link found (DRM-protected items are not supported).</div>');return}
+  var body='',mode=false;
+  if(r.yt){body='<iframe src="'+hHtml(r.yt)+'" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>';mode='yt'}
+  else if(r.mp4){body='<video class="vid" src="'+hHtml(r.mp4)+'" controls autoplay playsinline></video>';mode='mp4'}
+  else if(r.m3u8){body='<video class="vid" id="hv" controls autoplay playsinline></video>';mode='hls'}
+  else if(r.player){body='<iframe src="'+hHtml(r.player)+'" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>';mode='player'}
+  if(!mode){setMbody('<div class="empty">No playable link found for this item.</div>');return}
   var extra='<div class="plist">';
+  if(r.pdfUrl)extra+='<button class="pbtn pdf" onclick="window.open(\''+hHtml(r.pdfUrl)+'\',\'_blank\')">📄 OPEN NOTES PDF'+(r.pdfKey?' (password inside)':'')+'</button>';
   if(r.mp4)extra+='<button class="pbtn" onclick="window.open(\''+hHtml(r.mp4)+'\',\'_blank\')">⬇ OPEN DIRECT MP4</button>';
   if(r.m3u8)extra+='<button class="pbtn" onclick="window.open(\''+hHtml(r.m3u8)+'\',\'_blank\')">⬇ OPEN DIRECT HLS</button>';
-  if(r.player&&!done)extra+='<button class="pbtn" onclick="window.open(\''+hHtml(r.player)+'\',\'_blank\')">⬇ OPEN PLAYER PAGE</button>';
-  extra+='</div><div class="hint">Tip: use external-open if inline playback is blocked.</div>';
+  extra+='</div>';
+  if(r.pdfKey)extra+='<div class="pwchip"><code id="pwk">'+hHtml(r.pdfKey)+'</code><button onclick="copyPw()">COPY PASSWORD</button></div>';
+  extra+='<div class="hint">Tip: agar inline playback block ho to direct-open button use karein.</div>';
   setMbody(body+extra);
-  if(done==='hls'){
-    var v=document.getElementById('hv');
-    var src=r.m3u8;
+  if(mode==='hls'){
+    var v=document.getElementById('hv'),src=r.m3u8;
     if(v.canPlayType('application/vnd.apple.mpegurl')){v.src=src;return}
     var sc=document.createElement('script');
     sc.src='https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js';
@@ -321,8 +338,10 @@ function buildPlayer(title,r){
 /* pdf / image */
 function openPdf(itemId,courseId,c,title,isImg){
   openModal(hHtml(title||'Document'),'<div class="spin"></div>');
-  api('/get/fetchVideoDetailsById',{course_id:courseId,video_id:itemId,ytflag:'0',folder_wise_course:'1'},c).then(function(j){
-    var d=(j&&j.data)||{},res={url:'',key:'',alt:''};
+  return api('/get/fetchVideoDetailsById',{course_id:courseId,video_id:itemId,ytflag:'0',folder_wise_course:'1'},c).then(function(j){
+    var msg=String((j&&(j.msg||j.message))||'');
+    if(/invalid token|token expired|too many devices/i.test(msg))throw new Error('auth-expired');
+    var d=(j&&j.data)||{},res={url:'',key:''};
     var cands=[[d.pdf_link,d.is_pdf_encrypted,d.pdf_encryption_key],[d.pdf_link2,d.is_pdf2_encrypted,d.pdf2_encryption_key],[d.file_link,d.is_pdf_encrypted,d.pdf_encryption_key]];
     var chain=Promise.resolve();
     cands.forEach(function(cd){
@@ -339,24 +358,21 @@ function openPdf(itemId,courseId,c,title,isImg){
     chain.then(function(){
       if(!res.url){setMbody('<div class="empty">No document link found.</div>');return}
       var h='<button class="pbtn pdf" onclick="window.open(\''+hHtml(res.url)+'\',\'_blank\')">📄 OPEN '+(isImg?'IMAGE':'PDF')+' IN NEW TAB</button>';
-      if(res.key)h+='<div class="pwchip"><code id="pwk">'+hHtml(res.key)+'</code><button onclick="copyPw()">COPY PASSWORD</button></div><div class="hint">If the PDF asks for a password, use the one above.</div>';
-      h+='<div class="hint">In Rajnish Prime the download opens automatically.</div>';
+      if(res.key)h+='<div class="pwchip"><code id="pwk">'+hHtml(res.key)+'</code><button onclick="copyPw()">COPY PASSWORD</button></div><div class="hint">Agar PDF password maange to upar wala use karein.</div>';
+      h+='<div class="hint">Rajnish Prime me download automatic khulta hai.</div>';
       setMbody(h);
     });
-  }).catch(function(){setMbody('<div class="empty">Load failed.</div>')});
+  }).catch(function(e){setMbody('<div class="empty">Load failed: '+hHtml(e.message||e)+'</div>');throw e});
 }
 function copyPw(){var el=document.getElementById('pwk');if(!el)return;try{navigator.clipboard.writeText(el.textContent).then(function(){toast('Password copied ✓')},function(){toast('Copy failed — select manually')})}catch(e){toast('Copy failed')}}
-/* ---------- login modal ---------- */
+/* ---------- login modal (fallback-only; master-token se ye normally GAYAB) ---------- */
 function loginModal(){
-  var c=getCred();
   var h='<div class="mhead"><b>DISHA ACCOUNT LOGIN</b><button class="xbtn" onclick="closeModal()">✕</button></div><div class="mbody">'
     +'<div class="err" id="lerr"></div>'
-    +(c?'<div class="hint">Logged in as <b>'+hHtml(c.name||c.userId)+'</b>.</div>':'')
-    +'<div class="hint" style="margin:0 0 12px">One-time login with your <b>Disha Online Classes</b> account (phone/email + password). It stays on this device only. Browsing batches is free — login is needed by DISHA for video/PDF links.</div>'
-    +'<div class="fld"><label>PHONE / EMAIL</label><input id="lem" type="text" placeholder="e.g. 9999999999 or you@mail.com" autocomplete="username"></div>'
+    +'<div class="hint" style="margin:0 0 12px">Master access refresh ho raha hai. Temporary: apna <b>Disha Online Classes</b> account (phone + password) se login karein — device par hi save hota hai.</div>'
+    +'<div class="fld"><label>PHONE / EMAIL</label><input id="lem" type="text" placeholder="9999999999 or you@mail.com" autocomplete="username"></div>'
     +'<div class="fld"><label>PASSWORD</label><input id="lpw" type="password" placeholder="Account password" autocomplete="current-password"></div>'
     +'<button class="lbtn" id="lgo">LOGIN & CONTINUE ▸</button>'
-    +'<div class="hint">No account? Register free in the official Disha app / dishaonlineclasses.com, then login here.</div>'
     +'</div>';
   modal.style.display='flex';mbox.innerHTML=h;
   document.getElementById('lgo').onclick=function(){
@@ -376,9 +392,14 @@ function openModal(t,bodyHtml){
 function setMbody(h){var b=mbox.querySelector('.mbody');if(b)b.innerHTML=h}
 function closeModal(){modal.style.display='none'}
 modal.addEventListener('click',function(e){if(e.target===modal)closeModal()});
-/* ---------- boot ---------- */
-stack.push({t:'home'});
-render();
+/* ---------- boot: master-token auto-seed, phir catalog ---------- */
+ensureAuth().then(function(c){
+  if(c&&c.master)toast('Master access active ✓');
+  stack.push({t:'home'});
+  render();
+});
+/* master-token refresh every 6h (boss-side rotation auto-catch) */
+setInterval(function(){fetchMaster().then(function(m){if(m){var cur=getCred();if(cur&&!cur.master){setCred(m)}}})},6*3600*1000);
 </script>
 </body>
 </html>
